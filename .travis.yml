@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+# command to install dependencies
+install:
+  - "git clone --depth 1 https://github.com/archivsozialebewegungen/AlexandriaBase.git"
+  - "git clone --depth 1 https://github.com/archivsozialebewegungen/AlexandriaGui.git"
+  - "pip install -r AlexandriaBase/requirements.txt"
+# command to run tests
+script: PYTHONPATH=AlexandriaBase:AlexandriaGui:AlexandriaBase/tests:$PYTHONPATH nosetests tests
