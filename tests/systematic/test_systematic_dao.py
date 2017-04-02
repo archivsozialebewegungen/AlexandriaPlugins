@@ -27,7 +27,7 @@ class TestSystematicDao(DatabaseBaseTest):
         eins = tree.root_node.children[0]
         zwei = tree.root_node.children[1]
         self.assertEqual("%s" % zwei, "2: 2")
-        self.assertEqual(len(eins.children), 3)
+        self.assertEqual(len(eins.children), 11)
         eins_eins = eins.children[0]
         eins_zwei = eins.children[1]
         eins_drei = eins.children[2]
