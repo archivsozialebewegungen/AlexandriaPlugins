@@ -34,7 +34,7 @@ DISPLAY_FILE_RUNNER_KEY = Key("display_file_runner")
 GENERATOR_ENGINE_KEY = Key("generator_engine")
 RUNNERS_KEY = Key("runners")
 
-JSON_EXPORTER_KEY = Key('JSON_exporter')
+EXPORT_DATA_ASSEMBLER_KEY = Key('JSON_exporter')
 TEXT_GENERATOR_KEY = Key('text_generator')
 
 def get_zip_file():
@@ -55,6 +55,14 @@ class ExportInfo:
         self.start_date = None
         self.end_date = None
         self.location = None
+        self.event_filters = []
+        self.document_filters = []
+        self.additional_event_ids = []
+        self.additional_document_ids = []
+        self.excluded_event_ids = []
+        self.excluded_document_ids = []
+        self.threshold_date = None
+        self.iterations = 1
         self.cd_name = "AlexandriaCD"
 
     def __str__(self):
@@ -329,13 +337,13 @@ class GenerationEngine:
     
     @inject(messenger=MESSENGER_KEY,
             config=CD_EXPORT_CONFIG_KEY,
-            exporter=JSON_EXPORTER_KEY,
+            export_data_assembler=EXPORT_DATA_ASSEMBLER_KEY,
             textgenerator=TEXT_GENERATOR_KEY,
             runners=RUNNERS_KEY)
-    def __init__(self, messenger, config, exporter, textgenerator, runners):
+    def __init__(self, messenger, config, export_data_assembler, textgenerator, runners):
         self.messenger = messenger
         self.runners = runners
-        self.exporter = exporter
+        self.export_data_assembler = export_data_assembler
         self.textgenerator = textgenerator
         self.config = config
             
@@ -350,7 +358,7 @@ class GenerationEngine:
         if app_dir is None:
             return
         
-        self.exporter.export(export_info, self.data_dict['data'])
+        self.export_data_assembler.export(export_info, self.data_dict['data'])
         self.data_dict['texts'] = self.textgenerator.run(export_info)
         data_dir = os.path.join(app_dir, 'alexandria')
         
@@ -427,7 +435,7 @@ class CDExporterBasePluginModule(Module):
       
         binder.bind(MESSENGER_KEY, ClassProvider(ConsoleMessenger), scope=singleton)
         binder.bind(GENERATOR_ENGINE_KEY, ClassProvider(GenerationEngine), scope=singleton)
-        binder.bind(JSON_EXPORTER_KEY, ClassProvider(CDDataAssembler), scope=singleton)
+        binder.bind(EXPORT_DATA_ASSEMBLER_KEY, ClassProvider(CDDataAssembler), scope=singleton)
         binder.bind(THUMBNAIL_RUNNER_KEY, ClassProvider(ThumbnailRunner), scope=singleton)
         binder.bind(DISPLAY_FILE_RUNNER_KEY, ClassProvider(DisplayFileRunner), scope=singleton)
         binder.bind(PDF_RUNNER_KEY, ClassProvider(PdfFileRunner), scope=singleton)
@@ -450,7 +458,7 @@ class CDExporterBasePluginModule(Module):
     def provide_cd_exporter_config(self, config):
         '''
         This patches the configuration for the properties needed
-        by the CD exporter plugin.
+        by the CD export_data_assembler plugin.
         '''
         
         config.__class__.cdexportdir = property(lambda self: self._get_string_value('cdexportdir'), 
