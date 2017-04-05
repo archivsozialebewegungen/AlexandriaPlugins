@@ -64,6 +64,13 @@ class ExportInfo:
         self.threshold_date = None
         self.iterations = 1
         self.cd_name = "AlexandriaCD"
+        self.texts = {}
+        self.texts['title'] = _("No title set")
+        self.texts['subtitle'] = _("No subtitle set")
+        self.texts['paragraphs'] = []
+        self.texts['impressum'] = """<h1>Impressum</h1>
+        <div>Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden</div>"""
+        
 
     def __str__(self):
         
@@ -74,6 +81,20 @@ class ExportInfo:
                                            _("End date"),
                                            self.end_date)
 
+    def save_to_file(self, file_name):
+        
+        file = open(file_name, 'w')
+        json.dump(self, file, cls=AlexEncoder)
+        file.close()
+        
+
+def load_export_info(file_name):
+    
+    file = open(file_name, 'r')
+    export_info = json.load(file, object_hook=export_info_object_hook)
+    file.close()
+    return export_info
+            
 class ConsoleMessenger():
     '''
     Simple messenger class that writes to stdout. The
@@ -97,6 +118,7 @@ def export_info_object_hook(obj):
          export_info.end_date = obj['end_date']
          export_info.location = obj['location']
          export_info.cd_name = obj['cd_name']
+         export_info.texts = obj['texts']
          return export_info
      
     if '_year' in obj:
@@ -157,7 +179,7 @@ class CDDataAssembler:
         event_references = self.references_dao.fetch_doc_event_references(
             start_date=export_info.start_date,
             end_date=export_info.end_date,
-            location=export_info.location
+            location="%s" % export_info.location.id
             )
         document_references = {}
         
@@ -190,23 +212,6 @@ class CDDataAssembler:
         data['events'] = events
         data['documents'] = documents
     
-class TextGenerator:
-    
-    def run(self, export_info):
-        
-        texts = {}
-        texts['title'] = 'Auszug aus der Alexandria Datenbank'
-        today = datetime.date.today()
-        texts['subtitle'] = today.strftime('Stand der Datenbank: %d. %B %Y.')
-        texts['paragraphs'] = []
-        texts['paragraphs'].append("""Dieser Datenträger enthält die Dokumente, die für 
-        den Zeitraum zwischen dem %s und dem %s relevant sind.""" % (export_info.start_date,
-                                                             export_info.end_date))
-        texts['impressum'] = """<h1>Impressum</h1>
-        <div>Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden</div>"""
-        
-        return texts
-        
             
 class ThumbnailRunner:
     
@@ -359,7 +364,7 @@ class GenerationEngine:
             return
         
         self.export_data_assembler.export(export_info, self.data_dict['data'])
-        self.data_dict['texts'] = self.textgenerator.run(export_info)
+        self.data_dict['texts'] = export_info.texts
         data_dir = os.path.join(app_dir, 'alexandria')
         
         for runner in self.runners:
@@ -441,7 +446,6 @@ class CDExporterBasePluginModule(Module):
         binder.bind(PDF_RUNNER_KEY, ClassProvider(PdfFileRunner), scope=singleton)
         binder.bind(EVENT_SORT_RUNNER_KEY, ClassProvider(EventSortRunner), scope=singleton)
         binder.bind(DOCUMENT_SORT_RUNNER_KEY, ClassProvider(DocumentSortRunner), scope=singleton)
-        binder.bind(TEXT_GENERATOR_KEY, ClassProvider(TextGenerator), scope=singleton)
 
     @provides(RUNNERS_KEY)
     @inject(event_sorter=EVENT_SORT_RUNNER_KEY,

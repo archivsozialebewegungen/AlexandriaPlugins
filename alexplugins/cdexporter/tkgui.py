@@ -16,7 +16,7 @@ from alexpresenters.dialogs.abstractdialogpresenter import AbstractInputDialogPr
 from alexandriabase.domain import AlexDate
 from alexplugins.cdexporter.base import GENERATOR_ENGINE_KEY, \
     ExportInfo, CDExporterBasePluginModule, CD_EXPORT_CONFIG_KEY, MESSENGER_KEY,\
-    AlexEncoder, export_info_object_hook
+    AlexEncoder, export_info_object_hook, TEXT_GENERATOR_KEY, load_export_info
 from tkgui.PluginManager import DocumentMenuAddition, EventMenuAddition
 from tkgui.dialogs.wizard import Wizard
 from tkgui.guiinjectorkeys import DOCUMENT_WINDOW_KEY
@@ -24,6 +24,7 @@ from tkinter import Label, Frame
 from alexplugins.systematic.tkgui import SYSTEMATIC_POINT_SELECTION_DIALOG_KEY
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 import json
+import datetime
 
 CHRONO_DIALOG_KEY = Key('chrono_dialog')
 CHRONO_DIALOG_PRESENTER_KEY = Key('chrono_dialog_presenter')
@@ -179,9 +180,18 @@ class ExportInfoWizard(Wizard):
         
         # Wizard page 1
         Label(self.pages[0], text=_("Start creating a CD")).pack(padx=5, pady=5)
-        Label(self.pages[0], text=_("Enter a name for the CD:")).pack()
-        self.name_entry = AlexEntry(self.pages[0])
-        self.name_entry.pack()
+
+        input_frame = Frame(self.pages[0])
+        Label(input_frame, text=_("Enter a name for the CD:")).grid(row=0, column=0)
+        self.name_entry = AlexEntry(input_frame)
+        self.name_entry.grid(row=0, column=1)
+        Label(input_frame, text=_("Enter a title:")).grid(row=1, column=0)
+        self.title_entry = AlexEntry(input_frame)
+        self.title_entry.grid(row=1, column=1)
+        Label(input_frame, text=_("Enter a subtitle:")).grid(row=2, column=0)
+        self.subtitle_entry = AlexEntry(input_frame)
+        self.subtitle_entry.grid(row=2, column=1)
+        input_frame.pack()
         
         # Wizard page 2
         Label(self.pages[1], text=_("Please enter a data range:")).pack(padx=5, pady=5)
@@ -224,6 +234,8 @@ class ExportInfoWizard(Wizard):
         export_info.start_date = self.start_date_entry.get()
         export_info.end_date = self.end_date_entry.get()
         export_info.location = self.location
+        export_info.texts['title'] = self.title_entry.get()
+        export_info.texts['subtitle'] = self.subtitle_entry.get()
         return export_info
     
     def _set_export_info(self, export_info):
@@ -233,8 +245,28 @@ class ExportInfoWizard(Wizard):
         self.location = export_info.location
         self._configure_location_button()
         self.name_entry.set(export_info.cd_name)
+        self.title_entry.set(export_info.texts['title'])
+        self.subtitle_entry.set(export_info.texts['subtitle'])
 
     export_info = property(_get_export_info, _set_export_info)
+
+class ChronoTextGenerator:
+    
+    def run(self, export_info):
+        
+        texts = {}
+        texts['title'] = 'Auszug aus der Alexandria Datenbank'
+        today = datetime.date.today()
+        texts['subtitle'] = today.strftime('Stand der Datenbank: %d. %B %Y.')
+        texts['paragraphs'] = []
+        texts['paragraphs'].append("""Dieser Datenträger enthält die Dokumente, die für 
+        den Zeitraum zwischen dem %s und dem %s relevant sind.""" % (export_info.start_date,
+                                                             export_info.end_date))
+        texts['impressum'] = """<h1>Impressum</h1>
+        <div>Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden</div>"""
+        
+        return texts
+        
 
 class ChronoCDExporterMenuAdditionsPresenter(object):
     '''
@@ -246,11 +278,13 @@ class ChronoCDExporterMenuAdditionsPresenter(object):
     end_date_calc = [[31, 3], [30, 6], [30, 9], [31, 12]]
     
     @inject(message_broker=guiinjectorkeys.MESSAGE_BROKER_KEY,
-            generation_engine=GENERATOR_ENGINE_KEY)
-    def __init__(self, message_broker, generation_engine):
+            generation_engine=GENERATOR_ENGINE_KEY,
+            text_generator=TEXT_GENERATOR_KEY)
+    def __init__(self, message_broker, generation_engine, text_generator):
         self.view = None
         self.message_broker = message_broker
         self.generation_engine = generation_engine
+        self.text_generator = text_generator
     
     def export_chronology(self):
         '''
@@ -269,10 +303,11 @@ class ChronoCDExporterMenuAdditionsPresenter(object):
             return
         
         export_info = self._chrono_info_to_export_info(chrono_info)
+        export_info.texts = self.text_generator.run(export_info)
         self.view.export_info = export_info
 
-        self._start_export(export_info)        
-        
+        self._start_export(export_info)            
+    
     def create_cd_definition(self):
         
         export_info = self.view.export_info
@@ -283,9 +318,7 @@ class ChronoCDExporterMenuAdditionsPresenter(object):
         if not file_name:
             return
         
-        file = open(file_name, 'w')
-        json.dump(export_info, file, cls=AlexEncoder)
-        file.close()
+        export_info.save_to_file(file_name)
         
     def edit_cd_definition(self):
 
@@ -293,9 +326,7 @@ class ChronoCDExporterMenuAdditionsPresenter(object):
         if not file_name:
             return
 
-        file = open(file_name, 'r')
-        self.view.export_info = json.load(file, object_hook=export_info_object_hook)
-        file.close()
+        self.view.export_info = load_export_info(file_name)
         
         self.create_cd_definition()
                  
@@ -305,11 +336,10 @@ class ChronoCDExporterMenuAdditionsPresenter(object):
         if not file_name:
             return
 
-        file = open(file_name, 'r')
-        export_info = json.load(file, object_hook=export_info_object_hook)
-        self.view.export_info = export_info
-        file.close()
 
+        export_info = load_export_info(file_name)
+        self.view.export_info = export_info
+        # Don't use the view here - it starts a dialog
         self._start_export(export_info)        
 
     def _start_export(self, export_info):
@@ -378,6 +408,9 @@ class CDExporterMenuAdditions(EventMenuAddition):
         menubar.addmenuitem(_('Export'), 'command', '',
                             label=_('Edit CD definition'),
                             command=self.presenter.edit_cd_definition)
+        menubar.addmenuitem(_('Export'), 'command', '',
+                            label=_('Create CD from definition'),
+                            command=self.presenter.create_cd_from_definition)
 
     def _get_chrono_info(self):
         
@@ -424,6 +457,7 @@ class CDExporterGuiPluginModule(CDExporterBasePluginModule):
                     ClassProvider(ChronoDialog), scope=singleton)
         binder.bind(CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY,
                     ClassProvider(ChronoCDExporterMenuAdditionsPresenter), scope=singleton)
+        binder.bind(TEXT_GENERATOR_KEY, ClassProvider(ChronoTextGenerator), scope=singleton)
 
         binder.bind(EXPORT_INFO_DIALOG_KEY,
                     ClassProvider(ExportInfoDialog), scope=singleton)
