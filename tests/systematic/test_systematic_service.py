@@ -199,21 +199,21 @@ class ServiceTest(unittest.TestCase):
 
     def test_potential_new_children_4(self):
         node = Node(SystematicPoint(SystematicIdentifier("1.2"), "Description"))
-        node.children = [SystematicPoint(SystematicIdentifier("1.2.1"), "Description")]
+        self.systematic_dao.get_children.return_value = [SystematicPoint(SystematicIdentifier("1.2.1"), "Description")]
         new_child_identifiers = self.service.get_potential_new_child_identifier(node)
         self.assertEqual(1, len(new_child_identifiers))
         self.assertEqual(SystematicIdentifier("1.2.2"), new_child_identifiers[0])
 
     def test_potential_new_children_5(self):
         node = Node(SystematicPoint(SystematicIdentifier("1.2"), "Description"))
-        node.children = [SystematicPoint(SystematicIdentifier("1.2", 1), "Description")]
+        self.systematic_dao.get_children.return_value = [SystematicPoint(SystematicIdentifier("1.2", 1), "Description")]
         new_child_identifiers = self.service.get_potential_new_child_identifier(node)
         self.assertEqual(1, len(new_child_identifiers))
         self.assertEqual(SystematicIdentifier("1.2", 2), new_child_identifiers[0])
 
     def test_potential_new_children_6(self):
         node = Node(SystematicPoint(SystematicIdentifier("1.2", 3), "Description"))
-        node.children = [SystematicPoint(SystematicIdentifier("1.2", 3, 1), "Description")]
+        self.systematic_dao.get_children.return_value = [SystematicPoint(SystematicIdentifier("1.2", 3, 1), "Description")]
         new_child_identifiers = self.service.get_potential_new_child_identifier(node)
         self.assertEqual(1, len(new_child_identifiers))
         self.assertEqual(SystematicIdentifier("1.2", 3, 2), new_child_identifiers[0])
