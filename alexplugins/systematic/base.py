@@ -343,6 +343,11 @@ class SystematicDao(GenericDao):
         node = self.get_node(identifier)
         return node.entity
     
+    def get_children(self, identifier):
+        
+        node = self.get_node(identifier)
+        return node.children
+    
     def get_node(self, identifier):
         '''
         Returns a systematic tree node.
@@ -570,6 +575,10 @@ class SystematicService:
                 False))
         return systematic_entries
     
+    def get_children(self, identifier):
+        
+        return self.systematic_dao.get_children(identifier)
+    
     def add_systematic_entry_to_document(self, document, systematic_node):
         '''
         Adds a systematic entry to a document. If the document already
@@ -607,14 +616,16 @@ class SystematicService:
         identifier = systematic_node.id
         if identifier.subfolder != 0:
             return [] # Subfolders may not have children
-        if len(systematic_node.children) == 0:
+        
+        children = self.get_children(systematic_node.id)
+        if len(children) == 0:
             if identifier.roman != 0:
                 return [SystematicIdentifier(identifier.node_id, identifier.roman, 1)]
             else:
                 return [SystematicIdentifier("%s.1" % identifier.node_id),
                         SystematicIdentifier(identifier.node_id, 1)]
         else:
-            last_child = systematic_node.children[-1].id
+            last_child = children[-1].id
             return [last_child.get_next_sibling_identifier()]
         
         

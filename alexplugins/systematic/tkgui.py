@@ -215,7 +215,8 @@ class SystematicMenuAdditionsPresenter(object):
         if not deletion_node:
             self.show_message(_("No entry to delete selected"))
             return
-        if len(deletion_node.children) != 0:
+        children = self.systematic_service.get_children(deletion_node.id)
+        if len(children) != 0:
             self.show_message(_("Systematic entry with children may not be deleted"))
             return
         if self.systematic_service.next_sibling_exists(deletion_node.id):
@@ -224,7 +225,7 @@ class SystematicMenuAdditionsPresenter(object):
         if self.systematic_service.systematic_id_is_in_use(deletion_node.id):
             self.show_message(_("Entry which is in use by documents may not be deleted"))
             return
-        self.systematic_service.delete(deletion_node.entity)
+        self.systematic_service.delete(deletion_node)
         self.message_broker.send_message(Message(SYSTEMATIC_CHANGED))
     
     def edit_node(self):
