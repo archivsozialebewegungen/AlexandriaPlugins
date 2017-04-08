@@ -254,18 +254,27 @@ class ChronoTextGenerator:
     
     def run(self, export_info):
         
-        texts = {}
-        texts['title'] = 'Auszug aus der Alexandria Datenbank'
-        today = datetime.date.today()
-        texts['subtitle'] = today.strftime('Stand der Datenbank: %d. %B %Y.')
-        texts['paragraphs'] = []
-        texts['paragraphs'].append("""Dieser Datenträger enthält die Dokumente, die für 
-        den Zeitraum zwischen dem %s und dem %s relevant sind.""" % (export_info.start_date,
-                                                             export_info.end_date))
-        texts['impressum'] = """<h1>Impressum</h1>
-        <div>Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden</div>"""
-        
-        return texts
+        pagecontent = {}
+        pagecontent['startpage'] = """
+Auszug aus der Alexandria Datenbank
+===================================
+
+Stand der Datenbank: %s
+-----------------------
+
+Dieser Datenträger enthält die Dokumente, die für 
+den Zeitraum zwischen dem %s und dem %s relevant sind.
+""" % (datetime.date.today().strftime('%d. %B %Y.'),
+       export_info.start_date,
+       export_info.end_date)
+
+        pagecontent['impressum'] = """
+Impressum
+=========
+
+Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden
+"""
+        return pagecontent
         
 
 class ChronoCDExporterMenuAdditionsPresenter(object):
@@ -303,7 +312,7 @@ class ChronoCDExporterMenuAdditionsPresenter(object):
             return
         
         export_info = self._chrono_info_to_export_info(chrono_info)
-        export_info.texts = self.text_generator.run(export_info)
+        export_info.pagecontent = self.text_generator.run(export_info)
         self.view.export_info = export_info
 
         self._start_export(export_info)            

@@ -10,6 +10,7 @@ import os
 import zipfile
 import sys
 import shutil
+from markdown import Markdown
 from subprocess import call
 from injector import Key, Module, ClassProvider, singleton, inject, provides
 from alexandriabase.domain import expand_id, AlexDate
@@ -64,12 +65,15 @@ class ExportInfo:
         self.threshold_date = None
         self.iterations = 1
         self.cd_name = "AlexandriaCD"
-        self.texts = {}
-        self.texts['title'] = _("No title set")
-        self.texts['subtitle'] = _("No subtitle set")
-        self.texts['paragraphs'] = []
-        self.texts['impressum'] = """<h1>Impressum</h1>
-        <div>Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden</div>"""
+        self.pagecontent = {}
+        self.pagecontent['startpage'] = _("""
+No startpage defined
+====================
+""")
+        self.pagecontent['imprint'] = _("""
+No imprint defined
+==================
+""")
         
 
     def __str__(self):
@@ -118,7 +122,7 @@ def export_info_object_hook(obj):
          export_info.end_date = obj['end_date']
          export_info.location = obj['location']
          export_info.cd_name = obj['cd_name']
-         export_info.texts = obj['texts']
+         export_info.pagecontent = obj['pagecontent']
          return export_info
      
     if '_year' in obj:
@@ -176,10 +180,13 @@ class CDDataAssembler:
         
         self.messenger.show(_("CD generation: Assembling event and document information..."))
         
+        location = None
+        if export_info.location:
+            location = export_info.location.id
         event_references = self.references_dao.fetch_doc_event_references(
             start_date=export_info.start_date,
             end_date=export_info.end_date,
-            location="%s" % export_info.location.id
+            location="%s" % location
             )
         document_references = {}
         
@@ -364,7 +371,9 @@ class GenerationEngine:
             return
         
         self.export_data_assembler.export(export_info, self.data_dict['data'])
-        self.data_dict['texts'] = export_info.texts
+        
+        self.data_dict['pagecontent'] = self._convert_page_content(export_info.pagecontent)
+        
         data_dir = os.path.join(app_dir, 'alexandria')
         
         for runner in self.runners:
@@ -374,6 +383,13 @@ class GenerationEngine:
      
         if self._generate_iso_image(export_info.cd_name, app_dir):
             self.messenger.show(_("CD successfully generated"))
+
+    def _convert_page_content(self, pagecontent):
+        markdown = Markdown(export_format='xhtml5')
+        result = {}
+        for pagename in pagecontent:
+            result[pagename] = markdown.convert(pagecontent[pagename])
+        return result
 
     def _write_data_js(self, data_dir):
 
