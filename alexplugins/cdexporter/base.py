@@ -13,7 +13,8 @@ import shutil
 from markdown import Markdown
 from subprocess import call
 from injector import Key, Module, ClassProvider, singleton, inject, provides
-from alexandriabase.domain import expand_id, AlexDate
+from alexandriabase.domain import expand_id, AlexDate,\
+    DocumentEventReferenceFilter
 from alexandriabase import baseinjectorkeys
 from alexandriabase.services.documentfilemanager import DocumentFileNotFound
 from alexandriabase.daos.metadata import DOCUMENT_TABLE, EVENT_TABLE
@@ -180,14 +181,13 @@ class CDDataAssembler:
         
         self.messenger.show(_("CD generation: Assembling event and document information..."))
         
-        location = None
+        ref_filter = DocumentEventReferenceFilter()
         if export_info.location:
-            location = export_info.location.id
-        event_references = self.references_dao.fetch_doc_event_references(
-            start_date=export_info.start_date,
-            end_date=export_info.end_date,
-            location="%s" % location
-            )
+            ref_filter.location = "%s" % export_info.location.id
+        ref_filter.earliest_date = export_info.start_date
+        ref_filter.latest_date = export_info.end_date
+        
+        event_references = self.references_dao.fetch_doc_event_references(ref_filter)
         document_references = {}
         
         document_map = {}
