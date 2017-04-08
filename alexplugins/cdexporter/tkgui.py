@@ -174,40 +174,42 @@ class ExportInfoWizardPresenter:
 class ExportInfoWizard(Wizard):
     
     def __init__(self, master, export_info, presenter, location_dialog):
-        super().__init__(master, presenter, number_of_pages=3, geometry="400x150")
+        super().__init__(master, presenter, number_of_pages=5, geometry="500x200")
         
         self.location_dialog = location_dialog
         
         # Wizard page 1
         Label(self.pages[0], text=_("Start creating a CD")).pack(padx=5, pady=5)
 
-        input_frame = Frame(self.pages[0])
-        Label(input_frame, text=_("Enter a name for the CD:")).grid(row=0, column=0)
-        self.name_entry = AlexEntry(input_frame)
-        self.name_entry.grid(row=0, column=1)
-        Label(input_frame, text=_("Enter a title:")).grid(row=1, column=0)
-        self.title_entry = AlexEntry(input_frame)
-        self.title_entry.grid(row=1, column=1)
-        Label(input_frame, text=_("Enter a subtitle:")).grid(row=2, column=0)
-        self.subtitle_entry = AlexEntry(input_frame)
-        self.subtitle_entry.grid(row=2, column=1)
-        input_frame.pack()
+        Label(self.pages[0], text=_("Enter a name for the CD:")).pack()
+        self.name_entry = AlexEntry(self.pages[0])
+        self.name_entry.pack()
         
         # Wizard page 2
-        Label(self.pages[1], text=_("Please enter a data range:")).pack(padx=5, pady=5)
+        Label(self.pages[1], text=_("Start page as markdown:")).pack(padx=5, pady=5)
+        self.start_page_entry = AlexText(self.pages[1])
+        self.start_page_entry.pack()
         
-        self.start_date_entry = AlexDateEntry(self.pages[1])
+        # Wizard page 3
+        Label(self.pages[2], text=_("Impressum as markdown:")).pack(padx=5, pady=5)
+        self.imprint_entry = AlexText(self.pages[2])
+        self.imprint_entry.pack()
+        
+        # Wizard page 4
+        Label(self.pages[3], text=_("Please enter a data range:")).pack(padx=5, pady=5)
+        
+        self.start_date_entry = AlexDateEntry(self.pages[3])
         self.start_date_entry.label = _("Enter start date:")
         self.start_date_entry.pack()
         
-        self.end_date_entry = AlexDateEntry(self.pages[1])
+        self.end_date_entry = AlexDateEntry(self.pages[3])
         self.end_date_entry.label = _("Enter end date:")
         self.end_date_entry.pack()
         
-        # Wizard page 2
-        Label(self.pages[2], text=_("Please select a location")).pack(padx=5, pady=5)
+        # Wizard page 5
+        Label(self.pages[4], text=_("Please select a location")).pack(padx=5, pady=5)
         self.location = None
-        self.location_button = AlexButton(self.pages[2], command=self._select_location)
+        self.location_button = AlexButton(self.pages[4], command=self._select_location)
         self.location_button.set(_("No location selected"))
         self.location_button.pack()
         
@@ -234,8 +236,8 @@ class ExportInfoWizard(Wizard):
         export_info.start_date = self.start_date_entry.get()
         export_info.end_date = self.end_date_entry.get()
         export_info.location = self.location
-        export_info.texts['title'] = self.title_entry.get()
-        export_info.texts['subtitle'] = self.subtitle_entry.get()
+        export_info.pagecontent['startpage'] = self.start_page_entry.get()
+        export_info.pagecontent['imprint'] = self.imprint_entry.get()
         return export_info
     
     def _set_export_info(self, export_info):
@@ -245,8 +247,8 @@ class ExportInfoWizard(Wizard):
         self.location = export_info.location
         self._configure_location_button()
         self.name_entry.set(export_info.cd_name)
-        self.title_entry.set(export_info.texts['title'])
-        self.subtitle_entry.set(export_info.texts['subtitle'])
+        self.start_page_entry.set(export_info.pagecontent['startpage'])
+        self.imprint_entry.set(export_info.pagecontent['imprint'])
 
     export_info = property(_get_export_info, _set_export_info)
 
