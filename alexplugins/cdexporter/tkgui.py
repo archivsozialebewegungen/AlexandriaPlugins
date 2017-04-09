@@ -15,15 +15,13 @@ from tkgui import guiinjectorkeys
 from alexpresenters.dialogs.abstractdialogpresenter import AbstractInputDialogPresenter
 from alexandriabase.domain import AlexDate
 from alexplugins.cdexporter.base import GENERATOR_ENGINE_KEY, \
-    ExportInfo, CDExporterBasePluginModule, CD_EXPORT_CONFIG_KEY, MESSENGER_KEY,\
-    AlexEncoder, export_info_object_hook, TEXT_GENERATOR_KEY, load_export_info
-from tkgui.PluginManager import DocumentMenuAddition, EventMenuAddition
+    ExportInfo, CDExporterBasePluginModule, MESSENGER_KEY,\
+    TEXT_GENERATOR_KEY, load_export_info
+from tkgui.PluginManager import EventMenuAddition
 from tkgui.dialogs.wizard import Wizard
-from tkgui.guiinjectorkeys import DOCUMENT_WINDOW_KEY
 from tkinter import Label, Frame
 from alexplugins.systematic.tkgui import SYSTEMATIC_POINT_SELECTION_DIALOG_KEY
 from tkinter.filedialog import asksaveasfilename, askopenfilename
-import json
 import datetime
 
 CHRONO_DIALOG_KEY = Key('chrono_dialog')
@@ -174,7 +172,7 @@ class ExportInfoWizardPresenter:
 class ExportInfoWizard(Wizard):
     
     def __init__(self, master, export_info, presenter, location_dialog):
-        super().__init__(master, presenter, number_of_pages=5, geometry="500x200")
+        super().__init__(master, presenter, number_of_pages=6, geometry="500x200")
         
         self.location_dialog = location_dialog
         
@@ -212,6 +210,16 @@ class ExportInfoWizard(Wizard):
         self.location_button = AlexButton(self.pages[4], command=self._select_location)
         self.location_button.set(_("No location selected"))
         self.location_button.pack()
+        
+        # Wizard page 6
+        Label(self.pages[5], text=_("Textsearch")).pack(padx=5, pady=5)
+        entry_frame = Frame(self.pages[5])
+        self.search_entries = []
+        for i in range(1,4):
+            Label(entry_frame, text=_("%d. search expression:") % i).grid(row=i-1, column=0)
+            self.search_entries.append(AlexEntry(entry_frame))
+            self.search_entries[-1].grid(row=i-1, column=1)
+        entry_frame.pack()
         
         self.export_info = export_info
         
@@ -279,7 +287,7 @@ Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden
         return pagecontent
         
 
-class ChronoCDExporterMenuAdditionsPresenter(object):
+class CDExporterMenuAdditionsPresenter(object):
     '''
     Presenter for creating CDs from alexandria data.
     Defines callbacks for menu entries.
@@ -467,7 +475,7 @@ class CDExporterGuiPluginModule(CDExporterBasePluginModule):
         binder.bind(CHRONO_DIALOG_KEY,
                     ClassProvider(ChronoDialog), scope=singleton)
         binder.bind(CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY,
-                    ClassProvider(ChronoCDExporterMenuAdditionsPresenter), scope=singleton)
+                    ClassProvider(CDExporterMenuAdditionsPresenter), scope=singleton)
         binder.bind(TEXT_GENERATOR_KEY, ClassProvider(ChronoTextGenerator), scope=singleton)
 
         binder.bind(EXPORT_INFO_DIALOG_KEY,
