@@ -5,11 +5,11 @@ Created on 13.12.2015
 '''
 from alexandriabase.domain import AlexDate
 from tkgui.mainwindows.BaseWindow import BaseWindow
-from acceptance.AcceptanceTestUtils import BaseAcceptanceTest, AcceptanceTestRunner,\
-    set_date, set_date_range
+from acceptance.AcceptanceTestUtils import BaseAcceptanceTest, AcceptanceTestRunner
 from tkgui.mainwindows import EventWindow
 import os
 from alexplugins.cdexporter.tkgui import CHRONO_DIALOG_KEY
+from alexplugins.cdexporter.base import CD_EXPORT_CONFIG_KEY
 
 class PluginFunctionalityTest(BaseAcceptanceTest):
 
@@ -18,13 +18,18 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
                                              'alexplugins.cdexporter.tkgui'])
         self.event_window_menubar = self.event_window.menubar
         self.document_window_menubar = self.document_window.menubar
+        config = self.injector.get(CD_EXPORT_CONFIG_KEY)
+        config.cdexportdir = self.env.tmpdir.name
+        config.genisoimage = '/bin/true'
 
     def test_suite(self):
 
         # Navigation
-        print("\nChecking navigation")
-        print("===================")
-        self.click_on_export_menu()
+        print("\nChecking CD export")
+        print("==================")
+        self.check_export_menu_exists()
+        self.check_chrono_export()
+        
         # Quit
         print("\nChecking quit")
         print("=============")
@@ -32,7 +37,7 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
         self.check_quit_works()
         self.success = True
     
-    def click_on_export_menu(self):
+    def check_export_menu_exists(self):
         
         print("Checking export menu exists...", end="")
         if not self.event_window_menubar.hasmenu(_('Export')):
@@ -43,22 +48,12 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
 
     def check_chrono_export(self):
         print("Checking exporting chronology works...", end='')
-        dialog = self.event_window.dialogs[CHRONO_DIALOG_KEY]
-
-        self.start_dialog(self.event_window_presenter.toggle_filter)
-        dialog.earliest_date = AlexDate(1961, 1, 1)
-        self.close_dialog(dialog)
+        dialog = self.injector.get(CHRONO_DIALOG_KEY)
         
-        self.assert_that_event_is(1961050101)
-        self.event_window_presenter.goto_first()
-        self.assert_that_event_is(1961050101)
-
-        # Turn filtering off
-        self.event_window_presenter.toggle_filter()
-
-        self.assert_that_event_is(1961050101)
-        self.event_window_presenter.goto_first()
-        self.assert_that_event_is(1940000001)
+        self.start_dialog(self.event_window_menubar.get_callback(_('Export'), _('Export chronology')))
+        dialog.current_quarter = 3
+        dialog.year_entry.set('1960')
+        self.close_dialog(dialog)
 
         print("OK")
         
@@ -67,7 +62,6 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
         self.event_window_presenter.quit()
         print("OK")
 
-        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
