@@ -5,7 +5,7 @@ Created on 10.10.2016
 '''
 import unittest
 from injector import Injector
-from alex_test_utils import TestModule, TestEnvironment, MODE_SIMPLE,\
+from alex_test_utils import TestEnvironment, MODE_SIMPLE,\
     load_table_data
 from alexandriabase import AlexBaseModule
 from alexandriabase.daos import DaoModule
@@ -24,7 +24,6 @@ class TestDaoModuleConfiguration(unittest.TestCase):
     def test_configuration(self):
         
         injector = Injector([
-                        TestModule(self.env),
                         AlexBaseModule(),
                         DaoModule(),
                         SystematicGuiPluginModule()
