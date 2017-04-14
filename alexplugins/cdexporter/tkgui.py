@@ -4,7 +4,6 @@ Created on 10.11.2016
 @author: michael
 '''
 from tkinter.constants import LEFT
-from threading import Thread
 import Pmw
 
 from injector import Key, ClassProvider, singleton, inject, provides
@@ -23,6 +22,7 @@ from tkinter import Label, Frame
 from alexplugins.systematic.tkgui import SYSTEMATIC_POINT_SELECTION_DIALOG_KEY
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 import datetime
+from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
 
 CHRONO_DIALOG_KEY = Key('chrono_dialog')
 CHRONO_DIALOG_PRESENTER_KEY = Key('chrono_dialog_presenter')
@@ -298,12 +298,14 @@ class CDExporterMenuAdditionsPresenter(object):
     
     @inject(message_broker=guiinjectorkeys.MESSAGE_BROKER_KEY,
             generation_engine=GENERATOR_ENGINE_KEY,
-            text_generator=TEXT_GENERATOR_KEY)
-    def __init__(self, message_broker, generation_engine, text_generator):
+            text_generator=TEXT_GENERATOR_KEY,
+            window_manager=WINDOW_MANAGER_KEY)
+    def __init__(self, message_broker, generation_engine, text_generator, window_manager):
         self.view = None
         self.message_broker = message_broker
         self.generation_engine = generation_engine
         self.text_generator = text_generator
+        self.window_manager = window_manager
     
     def export_chronology(self):
         '''
@@ -363,8 +365,7 @@ class CDExporterMenuAdditionsPresenter(object):
 
     def _start_export(self, export_info):
                  
-        export_thread = Thread(target=self.generation_engine.run, args=(export_info,))
-        export_thread.start()
+        self.window_manager.run_in_thread(target=self.generation_engine.run, args=(export_info,))
 
     def _chrono_info_to_export_info(self, chrono_info):
         
