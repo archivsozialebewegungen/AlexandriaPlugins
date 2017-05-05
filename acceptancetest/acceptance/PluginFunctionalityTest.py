@@ -8,8 +8,10 @@ from tkgui.mainwindows.BaseWindow import BaseWindow
 from acceptance.AcceptanceTestUtils import BaseAcceptanceTest, AcceptanceTestRunner
 from tkgui.mainwindows import EventWindow
 import os
-from alexplugins.cdexporter.tkgui import CHRONO_DIALOG_KEY
+from alexplugins.cdexporter.tkgui import CHRONO_DIALOG_KEY,\
+    EXPORT_INFO_DIALOG_KEY, EXPORT_INFO_WIZARD_CLASS_KEY
 from alexplugins.cdexporter.base import CD_EXPORT_CONFIG_KEY
+from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
 
 class PluginFunctionalityTest(BaseAcceptanceTest):
 
@@ -28,7 +30,8 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
         print("\nChecking CD export")
         print("==================")
         self.check_export_menu_exists()
-        self.check_chrono_export()
+        #self.check_chrono_export()
+        #self.check_create_cd_definition()
         
         # Quit
         print("\nChecking quit")
@@ -55,6 +58,27 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
         dialog.year_entry.set('1960')
         self.close_dialog(dialog)
 
+        print("OK")
+
+    def check_create_cd_definition(self):
+        print("Checking creation of cd defininition...", end="")
+        wizard = self.injector.get(EXPORT_INFO_WIZARD_CLASS_KEY)
+        
+        window_manager = self.injector.get(WINDOW_MANAGER_KEY)
+        self.wait()
+        window_manager.run_in_thread(self.event_window_menubar.get_callback(_('Export'), _('Create CD definition')))
+        #self.start_dialog(self.event_window_menubar.get_callback(_('Export'), _('Create CD definition')))
+        self.wait()
+        
+        wizard.name_entry.set("TESTCD")
+        self.wait()
+        wizard._next_page()
+        self.wait()
+        
+        #wizard._next_page()
+        #wizard._next_page()
+        #wizard._next_page()
+        
         print("OK")
         
     def check_quit_works(self):

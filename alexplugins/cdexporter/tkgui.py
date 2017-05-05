@@ -172,7 +172,7 @@ class ExportInfoWizardPresenter:
 class ExportInfoWizard(Wizard):
     
     def __init__(self, master, export_info, presenter, location_dialog):
-        super().__init__(master, presenter, number_of_pages=6, geometry="500x200")
+        super().__init__(master, presenter, number_of_pages=5, geometry="500x200")
         
         self.location_dialog = location_dialog
         
@@ -212,14 +212,14 @@ class ExportInfoWizard(Wizard):
         self.location_button.pack()
         
         # Wizard page 6
-        Label(self.pages[5], text=_("Textsearch")).pack(padx=5, pady=5)
-        entry_frame = Frame(self.pages[5])
-        self.search_entries = []
-        for i in range(1,4):
-            Label(entry_frame, text=_("%d. search expression:") % i).grid(row=i-1, column=0)
-            self.search_entries.append(AlexEntry(entry_frame))
-            self.search_entries[-1].grid(row=i-1, column=1)
-        entry_frame.pack()
+        #Label(self.pages[5], text=_("Textsearch")).pack(padx=5, pady=5)
+        #entry_frame = Frame(self.pages[5])
+        #self.search_entries = []
+        #for i in range(1,4):
+        #    Label(entry_frame, text=_("%d. search expression:") % i).grid(row=i-1, column=0)
+        #    self.search_entries.append(AlexEntry(entry_frame))
+        #    self.search_entries[-1].grid(row=i-1, column=1)
+        #entry_frame.pack()
         
         self.export_info = export_info
         
@@ -250,11 +250,11 @@ class ExportInfoWizard(Wizard):
     
     def _set_export_info(self, export_info):
         
+        self.name_entry.set(export_info.cd_name)
         self.start_date_entry.set(export_info.start_date)
         self.end_date_entry.set(export_info.end_date)
         self.location = export_info.location
         self._configure_location_button()
-        self.name_entry.set(export_info.cd_name)
         self.start_page_entry.set(export_info.pagecontent['startpage'])
         self.imprint_entry.set(export_info.pagecontent['imprint'])
 
@@ -278,7 +278,7 @@ den Zeitraum zwischen dem %s und dem %s relevant sind.
        export_info.start_date,
        export_info.end_date)
 
-        pagecontent['impressum'] = """
+        pagecontent['imprint'] = """
 Impressum
 =========
 
