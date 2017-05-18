@@ -172,7 +172,7 @@ class ExportInfoWizardPresenter:
 class ExportInfoWizard(Wizard):
     
     def __init__(self, master, export_info, presenter, location_dialog):
-        super().__init__(master, presenter, number_of_pages=5, geometry="500x200")
+        super().__init__(master, presenter, number_of_pages=6, geometry="500x200")
         
         self.location_dialog = location_dialog
         
@@ -212,6 +212,10 @@ class ExportInfoWizard(Wizard):
         self.location_button.pack()
         
         # Wizard page 6
+        Label(self.pages[5], text=_("Please select a title image")).pack(padx=5, pady=5)
+        self.start_image_button = AlexButton(self.pages[5], command=self._get_start_image_file)
+        self.start_image_button.set(_("No title image selected"))
+        self.start_image_button.pack()
         #Label(self.pages[5], text=_("Textsearch")).pack(padx=5, pady=5)
         #entry_frame = Frame(self.pages[5])
         #self.search_entries = []
@@ -225,6 +229,19 @@ class ExportInfoWizard(Wizard):
         
         self.wait_window(self)
 
+    def _get_start_image_file(self):
+        
+        new_start_image = askopenfilename(filetypes=[(_("Image file"), ".jpg")])
+        if new_start_image:
+            self.start_image = new_start_image
+        self._configure_start_image_button()
+
+    def _configure_start_image_button(self):    
+        if not self.start_image:
+            self.start_image_button.set(_("No start image selected"))
+        else:
+            self.start_image_button.set("%s" % self.start_image)
+    
     def _select_location(self):
 
         new_location = self.location_dialog.activate(self)
@@ -244,6 +261,7 @@ class ExportInfoWizard(Wizard):
         export_info.start_date = self.start_date_entry.get()
         export_info.end_date = self.end_date_entry.get()
         export_info.location = self.location
+        export_info.start_image = self.start_image
         export_info.pagecontent['startpage'] = self.start_page_entry.get()
         export_info.pagecontent['imprint'] = self.imprint_entry.get()
         return export_info
@@ -254,6 +272,7 @@ class ExportInfoWizard(Wizard):
         self.start_date_entry.set(export_info.start_date)
         self.end_date_entry.set(export_info.end_date)
         self.location = export_info.location
+        self.start_image = export_info.start_image
         self._configure_location_button()
         self.start_page_entry.set(export_info.pagecontent['startpage'])
         self.imprint_entry.set(export_info.pagecontent['imprint'])
@@ -317,10 +336,10 @@ class CDExporterMenuAdditionsPresenter(object):
     
         chrono_info = self.view.chrono_info
         if not chrono_info:
-            self.message_broker.send_error("Chronology generation aborted.")
+            self.message_broker.show_error("Chronology generation aborted.")
             return
         if chrono_info.year < 1500 or chrono_info.year > 2500:
-            self.message_broker.send_error("Chronology generation aborted. Invalid year.")
+            self.message_broker.show_error("Chronology generation aborted. Invalid year.")
             return
         
         export_info = self._chrono_info_to_export_info(chrono_info)

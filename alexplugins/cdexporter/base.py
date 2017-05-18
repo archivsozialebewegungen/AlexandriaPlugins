@@ -21,6 +21,7 @@ from alexandriabase.daos.metadata import DOCUMENT_TABLE, EVENT_TABLE
 from alexandriabase.baseinjectorkeys import CONFIG_KEY
 from alexandriabase.config import NoSuchConfigValue
 from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
+from shutil import copyfile
 
 CD_EXPORT_CONFIG_KEY = Key("cd_exporter_copnfig")
 
@@ -67,6 +68,7 @@ class ExportInfo:
         self.iterations = 1
         self.cd_name = "AlexandriaCD"
         self.pagecontent = {}
+        self.start_image = None
         self.pagecontent['startpage'] = _("""
 No startpage defined
 ====================
@@ -124,6 +126,7 @@ def export_info_object_hook(obj):
          export_info.location = obj['location']
          export_info.cd_name = obj['cd_name']
          export_info.pagecontent = obj['pagecontent']
+         export_info.start_image = obj['start_image']
          return export_info
      
     if '_year' in obj:
@@ -380,6 +383,7 @@ class GenerationEngine:
             runner.run(data_dir, self.data_dict)
         
         self._write_data_js(data_dir)
+        self._write_start_image(data_dir, export_info.start_image)
      
         if self._generate_iso_image(export_info.cd_name, app_dir):
             self.messenger.show(_("CD successfully generated"))
@@ -400,6 +404,13 @@ class GenerationEngine:
         file = open(filename, "w")
         file.write(javascript)
         file.close()
+
+    def _write_start_image(self, data_dir, start_image):
+        
+        self.messenger.show(_("CD generation: Copying start image..."))
+        if not start_image:
+            return
+        copyfile(start_image, os.path.join(data_dir, "start.jpg"))
 
     def _unzip_app(self, cd_name):
         
