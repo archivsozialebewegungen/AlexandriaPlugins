@@ -376,6 +376,10 @@ class GenerationEngine:
         self.export_data_assembler.export(export_info, self.data_dict['data'])
         
         self.data_dict['pagecontent'] = self._convert_page_content(export_info.pagecontent)
+        if export_info.start_image is not None:
+            self.data_dict['has_start_image'] = True
+        else:
+            self.data_dict['has_start_image'] = False
         
         data_dir = os.path.join(app_dir, 'alexandria')
         
