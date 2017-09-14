@@ -22,6 +22,7 @@ from alexandriabase.baseinjectorkeys import CONFIG_KEY
 from alexandriabase.config import NoSuchConfigValue
 from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from shutil import copyfile
+import logging
 
 CD_EXPORT_CONFIG_KEY = Key("cd_exporter_copnfig")
 
@@ -230,6 +231,7 @@ class ThumbnailRunner:
     def __init__(self, messenger, document_service):
         self.messenger = messenger
         self.document_service = document_service
+        self.logger = logging.getLogger()
         
     def run(self, data_dir, data_dict):
         number_of_documents = len(data_dict['data']['documents'])
@@ -249,7 +251,9 @@ class ThumbnailRunner:
                     file.write(self.document_service.get_thumbnail(file_info))
                     file.close()
                 except DocumentFileNotFound:
-                    pass
+                    self.logger.warn("Did not find file %s" % file_info.get_basename())
+                except Exception as e:
+                    self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
 
 class DisplayFileRunner:
     
@@ -258,6 +262,7 @@ class DisplayFileRunner:
     def __init__(self, messenger, document_service):
         self.messenger = messenger
         self.document_service = document_service
+        self.logger = logging.getLogger()
         
     def run(self, data_dir, data_dict):
         number_of_documents = len(data_dict['data']['documents'])
@@ -277,7 +282,9 @@ class DisplayFileRunner:
                     file.write(self.document_service.get_display_image(file_info))
                     file.close()
                 except DocumentFileNotFound:
-                    pass
+                    self.logger.warn("Did not find file %s" % file_info.get_basename())
+                except Exception as e:
+                    self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
 
 class PdfFileRunner:
     
@@ -286,6 +293,7 @@ class PdfFileRunner:
     def __init__(self, messenger, document_service):
         self.messenger = messenger
         self.document_service = document_service
+        self.logger = logging.getLogger()
         
     def run(self, data_dir, data_dict):
         number_of_documents = len(data_dict['data']['documents'])
@@ -305,7 +313,9 @@ class PdfFileRunner:
                 file.write(self.document_service.get_pdf(document))
                 file.close()
             except DocumentFileNotFound:
-                pass
+                self.logger.warn("Did not find file %s" % document.id)
+            except Exception as e:
+                self.logger.error("Error on processing file %s. Message: %s." % (document.id, e))
 
 
 class EventSortRunner:
