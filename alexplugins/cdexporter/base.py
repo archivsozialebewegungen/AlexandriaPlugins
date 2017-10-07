@@ -12,7 +12,7 @@ import sys
 import shutil
 from markdown import Markdown
 from subprocess import call
-from injector import Key, Module, ClassProvider, singleton, inject, provides
+from injector import Key, Module, ClassProvider, singleton, inject, provider
 from alexandriabase.domain import expand_id, AlexDate,\
     DocumentEventReferenceFilter
 from alexandriabase import baseinjectorkeys
@@ -160,19 +160,14 @@ class AlexEncoder(JSONEncoder):
 
 class CDDataAssembler:
     
-    @inject(messenger=MESSENGER_KEY,
-            document_dao=baseinjectorkeys.DokumentDaoKey,
-            event_dao=baseinjectorkeys.EreignisDaoKey,
-            document_file_info_dao = baseinjectorkeys.DOCUMENT_FILE_INFO_DAO_KEY,
-            references_dao=baseinjectorkeys.RelationsDaoKey,
-            event_cross_references_dao=baseinjectorkeys.EventCrossreferencesDaoKey)
+    @inject
     def __init__(self,
-                 messenger,
-                 document_dao,
-                 event_dao,
-                 document_file_info_dao,
-                 references_dao,
-                 event_cross_references_dao):
+                 messenger: MESSENGER_KEY,
+                 document_dao: baseinjectorkeys.DOCUMENT_DAO_KEY,
+                 event_dao: baseinjectorkeys.EVENT_DAO_KEY,
+                 document_file_info_dao: baseinjectorkeys.DOCUMENT_FILE_INFO_DAO_KEY,
+                 references_dao: baseinjectorkeys.RELATIONS_DAO_KEY,
+                 event_cross_references_dao: baseinjectorkeys.EVENT_CROSS_REFERENCES_DAO_KEY):
         self.messenger = messenger
         self.document_dao = document_dao
         self.event_dao = event_dao
@@ -225,9 +220,10 @@ class CDDataAssembler:
             
 class ThumbnailRunner:
     
-    @inject(messenger=MESSENGER_KEY,
-            document_service=baseinjectorkeys.DocumentServiceKey)
-    def __init__(self, messenger, document_service):
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_service: baseinjectorkeys.DOCUMENT_SERVICE_KEY):
         self.messenger = messenger
         self.document_service = document_service
         
@@ -253,9 +249,10 @@ class ThumbnailRunner:
 
 class DisplayFileRunner:
     
-    @inject(messenger=MESSENGER_KEY,
-            document_service=baseinjectorkeys.DocumentServiceKey)
-    def __init__(self, messenger, document_service):
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_service: baseinjectorkeys.DOCUMENT_SERVICE_KEY):
         self.messenger = messenger
         self.document_service = document_service
         
@@ -281,9 +278,10 @@ class DisplayFileRunner:
 
 class PdfFileRunner:
     
-    @inject(messenger=MESSENGER_KEY,
-            document_service=baseinjectorkeys.DocumentServiceKey)
-    def __init__(self, messenger, document_service):
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_service: baseinjectorkeys.DOCUMENT_SERVICE_KEY):
         self.messenger = messenger
         self.document_service = document_service
         
@@ -310,8 +308,8 @@ class PdfFileRunner:
 
 class EventSortRunner:
     
-    @inject(messenger=MESSENGER_KEY)
-    def __init__(self, messenger):
+    @inject
+    def __init__(self, messenger: MESSENGER_KEY):
         self.messenger = messenger
     
     def run(self, data_dir, data_dict):
@@ -330,8 +328,8 @@ class EventSortRunner:
                        
 class DocumentSortRunner:
     
-    @inject(messenger=MESSENGER_KEY)
-    def __init__(self, messenger):
+    @inject
+    def __init__(self, messenger: MESSENGER_KEY):
         self.messenger = messenger
     
     def run(self, data_dir, data_dict):
@@ -350,12 +348,13 @@ class DocumentSortRunner:
             
 class GenerationEngine:
     
-    @inject(messenger=MESSENGER_KEY,
-            config=CD_EXPORT_CONFIG_KEY,
-            export_data_assembler=EXPORT_DATA_ASSEMBLER_KEY,
-            textgenerator=TEXT_GENERATOR_KEY,
-            runners=RUNNERS_KEY)
-    def __init__(self, messenger, config, export_data_assembler, textgenerator, runners):
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 config: CD_EXPORT_CONFIG_KEY,
+                 export_data_assembler: EXPORT_DATA_ASSEMBLER_KEY,
+                 textgenerator: TEXT_GENERATOR_KEY,
+                 runners: RUNNERS_KEY):
         self.messenger = messenger
         self.runners = runners
         self.export_data_assembler = export_data_assembler
@@ -478,19 +477,19 @@ class CDExporterBasePluginModule(Module):
         binder.bind(EVENT_SORT_RUNNER_KEY, ClassProvider(EventSortRunner), scope=singleton)
         binder.bind(DOCUMENT_SORT_RUNNER_KEY, ClassProvider(DocumentSortRunner), scope=singleton)
 
-    @provides(RUNNERS_KEY)
-    @inject(event_sorter=EVENT_SORT_RUNNER_KEY,
-            document_sorter=DOCUMENT_SORT_RUNNER_KEY,
-            thumbnail=THUMBNAIL_RUNNER_KEY,
-            display_file=DISPLAY_FILE_RUNNER_KEY,
-            pdf_file=PDF_RUNNER_KEY
-            )
-    def provide_runners(self, event_sorter, document_sorter, thumbnail, display_file, pdf_file):
+    @provider
+    @inject
+    def provide_runners(self,
+                        event_sorter: EVENT_SORT_RUNNER_KEY,
+                        document_sorter: DOCUMENT_SORT_RUNNER_KEY,
+                        thumbnail: THUMBNAIL_RUNNER_KEY,
+                        display_file: DISPLAY_FILE_RUNNER_KEY,
+                        pdf_file: PDF_RUNNER_KEY) -> RUNNERS_KEY:
         return [event_sorter, document_sorter, thumbnail, display_file, pdf_file]
     
-    @provides(CD_EXPORT_CONFIG_KEY)
-    @inject(config=CONFIG_KEY)
-    def provide_cd_exporter_config(self, config):
+    @provider
+    @inject
+    def provide_cd_exporter_config(self, config: CONFIG_KEY) -> CD_EXPORT_CONFIG_KEY:
         '''
         This patches the configuration for the properties needed
         by the CD export_data_assembler plugin.

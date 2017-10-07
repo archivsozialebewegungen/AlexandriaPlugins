@@ -209,7 +209,7 @@ class DocumentSystematicReferencesPresenterTest(BaseIntegrationTest):
         self.injector = self.get_injector(PresentersModule(), SystematicGuiPluginModule())
         load_table_data(['systematik', 'sverweis'], self.engine)
         self.systematic_service = self.injector.get(SYSTEMATIC_SERVICE_KEY)
-        self.document_dao = self.injector.get(baseinjectorkeys.DokumentDaoKey)
+        self.document_dao = self.injector.get(baseinjectorkeys.DOCUMENT_DAO_KEY)
         self.systematic_dao = self.injector.get(SYSTEMATIC_DAO_KEY)
         self.presenter = self.injector.get(DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY)
         self.view = MagicMock(spec=DocumentSystematicReferenceView)

@@ -6,7 +6,7 @@ Created on 10.11.2016
 from tkinter.constants import LEFT
 import Pmw
 
-from injector import Key, ClassProvider, singleton, inject, provides
+from injector import Key, ClassProvider, singleton, inject, provider
 from tkgui.dialogs.abstractdialog import AbstractInputDialog
 from tkgui.components.alexwidgets import AlexLabel, AlexEntry, AlexDateEntry,\
     AlexText, AlexButton
@@ -49,8 +49,8 @@ class MessageBarMessenger():
     Messenger implementation that uses the tkgui message_broker
     '''
     
-    @inject(message_broker=guiinjectorkeys.MESSAGE_BROKER_KEY)
-    def __init__(self, message_broker):
+    @inject
+    def __init__(self, message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY):
         
         self.message_broker = message_broker
         
@@ -80,8 +80,8 @@ class ChronoDialog(AbstractInputDialog):
     Dialog to get the user input on which chrono to produce.
     '''
 
-    @inject(presenter=CHRONO_DIALOG_PRESENTER_KEY)
-    def __init__(self, presenter):
+    @inject
+    def __init__(self, presenter: CHRONO_DIALOG_PRESENTER_KEY):
         self.quarters = ("%s 1" % _('Quarter'),
                          "%s 2" % _('Quarter'),
                          "%s 3" % _('Quarter'),
@@ -145,10 +145,11 @@ class ChronoDialog(AbstractInputDialog):
     
 class ExportInfoDialog:
     
-    @inject(wizard_class=EXPORT_INFO_WIZARD_CLASS_KEY,
-            wizard_presenter=EXPORT_INFO_WIZARD_PRESENTER,
-            location_selection_dialog=SYSTEMATIC_POINT_SELECTION_DIALOG_KEY)
-    def __init__(self, wizard_class, wizard_presenter, location_selection_dialog):
+    @inject
+    def __init__(self,
+                 wizard_class: EXPORT_INFO_WIZARD_CLASS_KEY,
+                 wizard_presenter: EXPORT_INFO_WIZARD_PRESENTER,
+                 location_selection_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY):
         
         self.wizard_class = wizard_class
         self.wizard_presenter = wizard_presenter
@@ -315,11 +316,12 @@ class CDExporterMenuAdditionsPresenter(object):
     start_date_calc = [[4, -1], [7, -1], [10, -1], [1, 0]]
     end_date_calc = [[31, 3], [30, 6], [30, 9], [31, 12]]
     
-    @inject(message_broker=guiinjectorkeys.MESSAGE_BROKER_KEY,
-            generation_engine=GENERATOR_ENGINE_KEY,
-            text_generator=TEXT_GENERATOR_KEY,
-            window_manager=WINDOW_MANAGER_KEY)
-    def __init__(self, message_broker, generation_engine, text_generator, window_manager):
+    @inject
+    def __init__(self,
+                 message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
+                 generation_engine: GENERATOR_ENGINE_KEY,
+                text_generator: TEXT_GENERATOR_KEY,
+                window_manager: WINDOW_MANAGER_KEY):
         self.view = None
         self.message_broker = message_broker
         self.generation_engine = generation_engine
@@ -410,10 +412,11 @@ class CDExporterMenuAdditions(EventMenuAddition):
     information from this class.
     '''
 
-    @inject(presenter=CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY,
-            chrono_dialog=CHRONO_DIALOG_KEY,
-            export_info_dialog=EXPORT_INFO_DIALOG_KEY)
-    def __init__(self, presenter, chrono_dialog, export_info_dialog):
+    @inject
+    def __init__(self,
+                 presenter: CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY,
+                 chrono_dialog: CHRONO_DIALOG_KEY,
+                 export_info_dialog: EXPORT_INFO_DIALOG_KEY):
 
         self.presenter = presenter
         self.presenter.view = self
@@ -503,8 +506,8 @@ class CDExporterGuiPluginModule(CDExporterBasePluginModule):
         binder.bind(EXPORT_INFO_WIZARD_PRESENTER,
                     ClassProvider(ExportInfoWizardPresenter), scope=singleton)
                
-    @provides(EXPORT_INFO_WIZARD_CLASS_KEY)
-    def getExportInfoWizardClass(self):
+    @provider
+    def getExportInfoWizardClass(self) -> EXPORT_INFO_WIZARD_CLASS_KEY:
         
         return ExportInfoWizard
     

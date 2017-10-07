@@ -298,8 +298,8 @@ class SystematicDao(GenericDao):
     Dao for the systematic tree.
     '''
 
-    @inject(db_engine=baseinjectorkeys.DBEngineKey)
-    def __init__(self, db_engine):
+    @inject
+    def __init__(self, db_engine: baseinjectorkeys.DB_ENGINE_KEY):
         super().__init__(db_engine)
         self.cache = None
         self.table = SYSTEMATIC_TABLE
@@ -410,8 +410,8 @@ class DocumentSystematicRelationsDao(GenericDao):
     Handles the document to systematic relations
     '''
     
-    @inject(db_engine=baseinjectorkeys.DBEngineKey)
-    def __init__(self, db_engine):
+    @inject
+    def __init__(self, db_engine: baseinjectorkeys.DB_ENGINE_KEY):
         super().__init__(db_engine)
         self.dsref_table = DOCUMENT_SYSTEMATIC_REFERENCE_TABLE
         self.doc_table = DOCUMENT_TABLE
@@ -544,10 +544,11 @@ class SystematicService:
     two different services.
     '''
     # pylint: disable=invalid-name
-    @inject(systematic_dao=SYSTEMATIC_DAO_KEY,
-            document_dao=baseinjectorkeys.DokumentDaoKey,
-            references_dao=DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY)
-    def __init__(self, systematic_dao, document_dao, references_dao):
+    @inject
+    def __init__(self,
+                 systematic_dao: SYSTEMATIC_DAO_KEY,
+                 document_dao: baseinjectorkeys.DOCUMENT_DAO_KEY,
+                references_dao: DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY):
         self.systematic_dao = systematic_dao
         self.document_dao = document_dao
         self.references_dao = references_dao
@@ -715,8 +716,8 @@ class SystematicPdfGenerationService(object):
     '''
     # pylint: disable=no-self-use
 
-    @inject(systematic_dao=SYSTEMATIC_DAO_KEY)
-    def __init__(self, systematic_dao):
+    @inject
+    def __init__(self, systematic_dao: SYSTEMATIC_DAO_KEY):
         '''
         Constructor
         '''

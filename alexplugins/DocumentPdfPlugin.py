@@ -18,11 +18,10 @@ class DocumentPdfMenuAdditionPresenter(object):
     classdocs
     '''
 
-    @inject(message_broker=guiinjectorkeys.MESSAGE_BROKER_KEY,
-            file_provider=baseinjectorkeys.DOCUMENT_FILE_PROVIDER)
+    @inject
     def __init__(self,
-                 message_broker,
-                 file_provider):
+                 message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
+                 file_provider: baseinjectorkeys.DOCUMENT_FILE_PROVIDER):
         '''
         Constructor
         '''
@@ -50,11 +49,10 @@ class DocumentPdfMenuAddition(DocumentMenuAddition):
     classdocs
     '''
 
-    @inject(presenter=DOCUMENT_PDF_PLUGIN_PRESENTER_KEY,
-            file_viewers=guiinjectorkeys.DOCUMENT_FILE_VIEWERS_KEY)
+    @inject
     def __init__(self,
-                 presenter,
-                 file_viewers):
+                 presenter: DOCUMENT_PDF_PLUGIN_PRESENTER_KEY,
+                 file_viewers: guiinjectorkeys.DOCUMENT_FILE_VIEWERS_KEY):
         '''
         Constructor
         '''

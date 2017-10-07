@@ -20,7 +20,7 @@ class DocumentPdfGenerationTest(BaseIntegrationTest):
         super().setUp()
         self.injector = self.get_injector(PresentersModule(), DocumentPdfPluginModule())
         self.presenter = self.injector.get(DOCUMENT_PDF_PLUGIN_PRESENTER_KEY)
-        self.document_service = self.injector.get(baseinjectorkeys.DocumentServiceKey)
+        self.document_service = self.injector.get(baseinjectorkeys.DOCUMENT_SERVICE_KEY)
         self.view = MagicMock()
         self.presenter.view = self.view;
 
