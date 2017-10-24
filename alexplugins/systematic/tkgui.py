@@ -156,7 +156,7 @@ class DocumentSystematicReferenceView(ReferenceView):
         
     def _select_a_new_systematic_point(self):
         
-        return self.systematic_point_dialog.activate(self._hull)
+        return self.systematic_point_dialog.activate(self)
         
     new_systematic_point = property(_select_a_new_systematic_point)
 
