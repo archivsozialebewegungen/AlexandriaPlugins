@@ -7,22 +7,21 @@ from tkinter.constants import LEFT
 import Pmw
 
 from injector import Key, ClassProvider, singleton, inject, provider
-from tkgui.dialogs.abstractdialog import AbstractInputDialog
 from tkgui.components.alexwidgets import AlexLabel, AlexEntry, AlexDateEntry,\
     AlexText, AlexButton
 from tkgui import guiinjectorkeys
-from alexpresenters.dialogs.abstractdialogpresenter import AbstractInputDialogPresenter
 from alexandriabase.domain import AlexDate
 from alexplugins.cdexporter.base import GENERATOR_ENGINE_KEY, \
     ExportInfo, CDExporterBasePluginModule, MESSENGER_KEY,\
     TEXT_GENERATOR_KEY, load_export_info
 from tkgui.PluginManager import EventMenuAddition
-from tkgui.dialogs.wizard import Wizard
-from tkinter import Label, Frame
+from tkinter import Label
 from alexplugins.systematic.tkgui import SYSTEMATIC_POINT_SELECTION_DIALOG_KEY
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 import datetime
 from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
+from alexpresenters.DialogPresenters import AbstractInputDialogPresenter
+from tkgui.Dialogs import AbstractInputDialog, Wizard
 
 CHRONO_DIALOG_KEY = Key('chrono_dialog')
 CHRONO_DIALOG_PRESENTER_KEY = Key('chrono_dialog_presenter')
@@ -81,7 +80,9 @@ class ChronoDialog(AbstractInputDialog):
     '''
 
     @inject
-    def __init__(self, presenter: CHRONO_DIALOG_PRESENTER_KEY):
+    def __init__(self,
+                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
+                 presenter: CHRONO_DIALOG_PRESENTER_KEY):
         self.quarters = ("%s 1" % _('Quarter'),
                          "%s 2" % _('Quarter'),
                          "%s 3" % _('Quarter'),
@@ -91,7 +92,7 @@ class ChronoDialog(AbstractInputDialog):
         self.quarter_select = None
         self.year_entry = None
         
-        super().__init__(presenter)
+        super().__init__(window_manager, presenter)
         
     def _init_dialog(self, master):
         # We want to reuse the filter dialog if it already exists

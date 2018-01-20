@@ -62,13 +62,13 @@ class SystematicPointSelectionDialogPresenterTest(BaseIntegrationTest):
 
 
     def test_get_systematic_tree(self):
-        self.presenter.get_tree()
+        self.presenter.set_tree()
         self.assertTrue(not self.view.tree.root_node is None)
 
     def test_assemble_return_value(self):
-        self.presenter.get_tree()
+        self.presenter.set_tree()
         self.view.input = self.view.tree.root_node.children[0].children[0].children[0]
-        self.presenter.assemble_return_value()
+        self.presenter.ok_action()
         self.assertEqual("1.1.I: 1.1.I", "%s" % self.view.return_value)
 
 class TestSystematicPlugin(BaseIntegrationTest):
@@ -87,60 +87,34 @@ class TestSystematicPlugin(BaseIntegrationTest):
         self.tree = self.service.get_systematic_tree()
 
     def test_new_entry(self):
-        self.view.parent_node = self.tree.get_by_id(SystematicIdentifier("2"))
-        self.view.new_entry = SystematicPoint(SystematicIdentifier("2.1"), "New entry")
+        self.view.working_entry = SystematicPoint(SystematicIdentifier("2.1"), "New entry")
         
         with pytest.raises(NoSuchNodeException):
             self.tree.get_by_id(SystematicIdentifier("2.1"))
             
-        self.presenter.create_new_entry()
+        self.presenter.save_working_entry_action()
         
-        potential_ids = self.view.potential_child_ids
-        self.assertEqual(2, len(potential_ids))
         new_tree = self.service.get_systematic_tree()
         new_entry = new_tree.get_by_id(SystematicIdentifier("2.1"))
         self.assertFalse(new_entry is None)
 
-    def test_new_entry_without_parent_selection(self):
-        self.view.parent_node = None
-
-        self.presenter.create_new_entry()
-        self.assertMessage(ERROR_MESSAGE)
-
-    def test_new_entry_without_new_entry_selection(self):
-        self.view.parent_node = self.tree.get_by_id(SystematicIdentifier("2"))
-        self.view.new_entry = None
-        
-        self.presenter.create_new_entry()
-        
-        self.assertMessage(ERROR_MESSAGE)
-
     def test_delete_node(self):
         identifier = SystematicIdentifier("1.1", 2, 3)
         self.tree.get_by_id(identifier) # Assert entry exists
-        self.view.deletion_node = self.tree.get_by_id(identifier)
+        self.view.working_entry = self.tree.get_by_id(identifier).entity
         
-        self.presenter.delete_node()
+        self.presenter.delete_entry_action()
         
         new_tree = self.service.get_systematic_tree()
         with pytest.raises(NoSuchNodeException):
             new_tree.get_by_id(identifier)
 
-    def test_delete_node_with_none_selected(self):
-        self.view.deletion_node = None
-        
-        self.presenter.delete_node()
-        
-        self.assertEquals(
-            _("No entry to delete selected"),
-            self.received_messages[0].message)
-
     def test_delete_node_with_children(self):
         identifier = SystematicIdentifier("1.1")
         self.tree.get_by_id(identifier) # Assert entry exists
-        self.view.deletion_node = self.tree.get_by_id(identifier)
+        self.view.working_entry = self.tree.get_by_id(identifier).entity
         
-        self.presenter.delete_node()
+        self.presenter.delete_entry_action()
         
         self.assertEquals(
             _("Systematic entry with children may not be deleted"),
@@ -149,9 +123,9 @@ class TestSystematicPlugin(BaseIntegrationTest):
     def test_delete_node_with_sibling(self):
         identifier = SystematicIdentifier("1.1", 2, 2)
         self.tree.get_by_id(identifier) # Assert entry exists
-        self.view.deletion_node = self.tree.get_by_id(identifier)
+        self.view.working_entry = self.tree.get_by_id(identifier).entity
         
-        self.presenter.delete_node()
+        self.presenter.delete_entry_action()
         
         self.assertEquals(
             _("Can't delete entry when sibling exists"),
@@ -160,9 +134,9 @@ class TestSystematicPlugin(BaseIntegrationTest):
     def test_delete_used_entry(self):
         identifier = SystematicIdentifier("2")
         self.tree.get_by_id(identifier) # Assert entry exists
-        self.view.deletion_node = self.tree.get_by_id(identifier)
+        self.view.working_entry = self.tree.get_by_id(identifier).entity
         
-        self.presenter.delete_node()
+        self.presenter.delete_entry_action()
         
         self.assertEquals(
             _("Entry which is in use by documents may not be deleted"),
@@ -170,23 +144,14 @@ class TestSystematicPlugin(BaseIntegrationTest):
         
     def test_edit_entry(self):
         identifier = SystematicIdentifier("2")
-        edit_node = self.tree.get_by_id(identifier)
-        edit_node.entity.description = "Totally new description"
-        self.view.edit_node = edit_node
+        edit_entry = self.tree.get_by_id(identifier).entity
+        edit_entry.description = "Totally new description"
+        self.view.working_entry = edit_entry
         
-        self.presenter.edit_node()
+        self.presenter.save_working_entry_action()
         
         new_tree = self.service.get_systematic_tree()
         self.assertEqual("Totally new description", new_tree.get_by_id(identifier).entity.description)
-        
-    def test_edit_entry_no_selection(self):
-        self.view.edit_node = None
-        
-        self.presenter.edit_node()
-        
-        self.assertEquals(
-            _("Nothing to save"),
-            self.received_messages[0].message)
         
     def test_export_as_pdf(self):
         (fd, tmp_file) = tempfile.mkstemp("pdf")

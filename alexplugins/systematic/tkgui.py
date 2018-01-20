@@ -12,15 +12,14 @@ from tkgui.components.references.basereference import ReferencesWidgetFactory,\
     ReferenceView, Action
 from alexplugins.systematic import SYSTEMATIC_SERVICE_KEY,\
     SYSTEMATIC_PDF_GENERATION_SERVICE_KEY
-from alexpresenters.dialogs.generic_tree_selection_presenter import GenericTreeSelectionPresenter
 from alexplugins.systematic.base import SystematicPoint,\
     SystematicBasePluginModule
-from tkgui.dialogs.generic_tree_selection_dialog import GenericTreeSelectionDialog
-from tkgui.dialogs.filterdialogs import GenericFilterDialog
 from tkgui.components.alexwidgets import AlexLabel, AlexButton
 from tkinter.constants import W
 from tkgui.PluginManager import DocumentMenuAddition,\
     DocumentReferenceFactory
+from tkgui.Dialogs import GenericFilterDialog, GenericTreeSelectionDialog
+from alexpresenters.DialogPresenters import GenericTreeSelectionPresenter
 
 SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY = Key('systematic_point_selection_presenter')
 SYSTEMATIC_POINT_SELECTION_DIALOG_KEY = Key('systematic_point_selection_dialog')
@@ -36,35 +35,33 @@ class SystematicDocumentFilterDialog(GenericFilterDialog):
 
     @inject
     def __init__(self,
+                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
                  presenter: guiinjectorkeys.DOCUMENT_FILTER_DIALOG_PRESENTER_KEY,
                  systematic_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY):
-        super().__init__(presenter)
+        super().__init__(window_manager, presenter)
         self.systematic_dialog = systematic_dialog
 
-    def _init_dialog(self, master):
-        self.master = master
-        if self.dialog != None:
-            return
-        super()._init_dialog(master)
-        AlexLabel(self.dialog.interior(), text=_("Signature:")).grid(row=3, column=0, sticky=W)
-        self.signature_label = AlexLabel(self.dialog.interior(), text='')
+    def create_dialog(self):
+        super().create_dialog()
+        AlexLabel(self.interior, text=_("Signature:")).grid(row=3, column=0, sticky=W)
+        self.signature_label = AlexLabel(self.interior, text='')
         self.signature_label.grid(row=3, column=1, sticky=W)
-        self.systematic_button = AlexButton(self.dialog.interior(), command=self._get_signature)
+        self.systematic_button = AlexButton(self.interior, command=self._get_signature)
         self.systematic_button.set(_("Select"))
         self.systematic_button.grid(row=3, column=2, sticky=W)
                    
     def _get_signature(self):
-        result = self.systematic_dialog.activate(self.master)
-        if result != None:
-            self.signature_label.set("%s" % result.id)
-        
+        self.systematic_dialog.activate(self._set_signature,
+                                                 label=_("Please select systematic point"))
+    def _set_signature(self, value):
+        if value != None:
+            self.signature_label.set("%s" % value.id)
+            
     def _clear_filter_form(self):
         super()._clear_filter_form()
         self.signature_label.set('')
     
     signature = property(lambda self: self.signature_label.get())
-
-
 
 class DocumentSystematicReferencesPresenter:
 
@@ -150,15 +147,21 @@ class DocumentSystematicReferenceView(ReferenceView):
             _('Systematic'))
         self.current_document = None
         self.view = None
+        self.new_systematic_point = None
         self.systematic_point_dialog = systematic_point_dialog
-        self.add_button(Action(_('New'), self.presenter.add_new_systematic_point))
+        self.add_button(Action(_('New'), self._select_a_new_systematic_point))
         self.add_button(Action(_('Delete'), self.presenter.delete_selected_systematic_point))
         
     def _select_a_new_systematic_point(self):
         
-        return self.systematic_point_dialog.activate(self)
+        return self.systematic_point_dialog.activate(self._add_a_new_systematic_point,
+                                                     label=_('Please select a systematic point'))
         
-    new_systematic_point = property(_select_a_new_systematic_point)
+    def _add_a_new_systematic_point(self, value):
+        if value is not None:
+            self.new_systematic_point = value
+            self.presenter.add_new_systematic_point()
+            self.new_systematic_point = None
 
 class SystematicPointSelectionPresenter(GenericTreeSelectionPresenter):
     
@@ -170,13 +173,13 @@ class SystematicPointSelectionPresenter(GenericTreeSelectionPresenter):
         self.systematic_service = systematic_service
         self.message_broker = message_broker
         self.message_broker.subscribe(self)
-        
-    def get_tree(self):
-        self.view.tree = self.systematic_service.get_systematic_tree()
+    
+    def set_tree(self):
+        self._view.tree = self.systematic_service.get_systematic_tree()
         
     def receive_message(self, message):
         if message == SYSTEMATIC_CHANGED:
-            self.get_tree()
+            self.set_tree()
 
 class SystematicMenuAdditionsPresenter(object):
     '''
@@ -187,7 +190,7 @@ class SystematicMenuAdditionsPresenter(object):
     def __init__(self,
                  message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
                  systematic_service: SYSTEMATIC_SERVICE_KEY,
-                pdf_generation_service: SYSTEMATIC_PDF_GENERATION_SERVICE_KEY):
+                 pdf_generation_service: SYSTEMATIC_PDF_GENERATION_SERVICE_KEY):
         '''
         Constructor
         '''
@@ -196,55 +199,45 @@ class SystematicMenuAdditionsPresenter(object):
         self.systematic_service = systematic_service
         self.pdf_generation_service = pdf_generation_service
         
-    def create_new_entry(self):
-        parent_node = self.view.parent_node
-        if not parent_node:
-            self.show_message(_("No parent entry selected"))
-            return
-        self.view.potential_child_ids = self.systematic_service.get_potential_new_child_identifier(parent_node)
-        new_entry = self.view.new_entry
-        if new_entry is None:
-            self.show_message(_("Creating new entry canceled or not possible."))
-            return
-        self.systematic_service.save(new_entry)
-        self.show_message(_("Systematic point %s saved!") % new_entry)
-        self.message_broker.send_message(Message(SYSTEMATIC_CHANGED))
+    def find_potential_child_ids(self):
+
+        self.view.potential_child_ids = self.systematic_service.get_potential_new_child_identifier(self.view.working_entry)
+
+    def create_new_entry_action(self):
         
-            
-    def delete_node(self):
-        deletion_node = self.view.deletion_node
-        if not deletion_node:
-            self.show_message(_("No entry to delete selected"))
-            return
-        children = self.systematic_service.get_children(deletion_node.id)
+        self.view.working_entry = SystematicPoint(self.view.new_child_id, _('No description'))
+        
+    def delete_entry_action(self):
+        deletion_entry = self.view.working_entry
+        children = self.systematic_service.get_children(deletion_entry.id)
         if len(children) != 0:
             self.show_message(_("Systematic entry with children may not be deleted"))
             return
-        if self.systematic_service.next_sibling_exists(deletion_node.id):
+        if self.systematic_service.next_sibling_exists(deletion_entry.id):
             self.show_message(_("Can't delete entry when sibling exists"))
             return
-        if self.systematic_service.systematic_id_is_in_use(deletion_node.id):
+        if self.systematic_service.systematic_id_is_in_use(deletion_entry.id):
             self.show_message(_("Entry which is in use by documents may not be deleted"))
             return
-        self.systematic_service.delete(deletion_node)
+        self.systematic_service.delete(deletion_entry)
         self.message_broker.send_message(Message(SYSTEMATIC_CHANGED))
     
-    def edit_node(self):
-        edit_node = self.view.edit_node
-        if edit_node is None:
-            self.show_message(_("Nothing to save"))
-            return
-        self.systematic_service.save(edit_node.entity)
-        self.show_message("Systematic point %s saved!" % edit_node)
+    def save_working_entry_action(self):
+        
+        edit_entry = self.view.working_entry
+        self.systematic_service.save(edit_entry)
+        self.show_message("Systematic point %s saved!" % edit_entry)
         self.message_broker.send_message(Message(SYSTEMATIC_CHANGED))
 
     def export_as_pdf(self):
+        
         export_file = self.view.pdf_file
         if export_file is None or len(export_file) == 0:
             return
         self.pdf_generation_service.generate_systematic_pdf(export_file)
         
     def show_message(self, message):
+        
         self.message_broker.send_message(
             Message(
             ERROR_MESSAGE,
@@ -273,80 +266,106 @@ class SystematicMenuAdditions(DocumentMenuAddition):
         self.string_selection_dialog = string_selection_dialog
         self.file_selection_dialog = file_selection_dialog
         
+        self.working_entry = None
+        self.potential_child_ids = []
+        self.new_child_id = None
+        
     def attach_to_window(self, parent_window):
         
         self.parent_window = parent_window
         parent_window.menubar.addmenu(_('Systematic'), '')
         parent_window.menubar.addmenuitem(_('Systematic'), 'command', '',
                             label=_('Create new entry'),
-                            command=self.presenter.create_new_entry)
+                            command=self._start_creation)
         parent_window.menubar.addmenuitem(_('Systematic'), 'command', '',
                             label=_('Delete entry'),
-                            command=self.presenter.delete_node)
+                            command=self._get_deletion_node)
         parent_window.menubar.addmenuitem(_('Systematic'), 'command', '',
                             label=_('Edit entry'),
-                            command=self.presenter.edit_node)
+                            command=self._get_edit_node)
         parent_window.menubar.addmenuitem(_('Systematic'), 'command', '',
                             label=_('Export as pdf'),
                             command=self.presenter.export_as_pdf)
 
-    def get_parent_node(self):
-        
-        return self.systematic_dialog.activate(self.parent_window, _("Please select parent entry for new entry"))
+    def _start_creation(self):
+        '''
+        This gets a parent node for a new systematic point
+        '''
+        self.systematic_dialog.activate(self._get_parent_entry_callback, 
+                                        label=_("Please select parent entry for new entry"))
 
-    def get_deletion_node(self):
-        
-        return self.systematic_dialog.activate(self.parent_window, _("Please select entry to delete"))
-
-    def get_edit_node(self):
-        
-        node = self.systematic_dialog.activate(self.parent_window, _("Please select node to edit"))
-        if node is None:
-            return None
-        new_description = self.string_edit_dialog.activate(
-            self.parent_window,
-            label=_("Please change description for %s:") % node,
-            initvalue = node.entity.description )
-        if new_description is None or node.entity.description == new_description:
-            return None
-        node.entity.description = new_description
-        return node
-    
-    def create_new_entry(self, potential_child_ids):
-        self.new_entry = None
-        if len(potential_child_ids) == 0:
+    def _get_parent_entry_callback(self, parent_entry):
+        if parent_entry is None:
             return
-        if len(potential_child_ids) == 1:
-            new_id = potential_child_ids[0]
-        else: 
-            new_id = self.string_selection_dialog.activate(
-                self.parent_window,
+        
+        self.working_entry = parent_entry
+        self.presenter.find_potential_child_ids()
+        if len(self.potential_child_ids) == 0:
+            return
+        if len(self.potential_child_ids) == 1:
+            self._create_new_entry(self.potential_child_ids[0])
+        else:
+            self.string_selection_dialog.activate(
+                self._create_new_entry,
                 label=_('Please select which systematic\npoint you want to create'),
-                choices=potential_child_ids)
-        if new_id is None:
+                choices=self.potential_child_ids)
+            
+    def _create_new_entry(self, entry_id):
+        
+        if entry_id is None:
             return
-        description = self.string_edit_dialog.activate(
-            self.parent_window,
-            label=_("Please enter a description for %s:" % new_id)
-            )
-        if description == '' or description is None:
+        self.new_child_id = self.potential_child_ids[0]
+        self.presenter.create_new_entry_action()
+        self.string_edit_dialog.activate(
+            self._change_description,
+            label=_("Please enter a description for %s:" % self.new_child_id)
+        )
+        
+    def _get_deletion_node(self):
+        
+        self.systematic_dialog.activate(self._get_deletion_node_callback,
+                                        label=_("Please select entry to delete"))
+
+    def _get_deletion_node_callback(self, deletion_entry):
+        if deletion_entry is None:
             return
-        self.new_entry = SystematicPoint(new_id, description)
+        self.working_entry = deletion_entry
+        self.presenter.delete_entry_action()
+        self.working_entry = None
+
+    def _get_edit_node(self):
+        
+        self.systematic_dialog.activate(self._get_edit_entry_callback, 
+                                        label=_("Please select node to edit"))
+
+    def _get_edit_entry_callback(self, edit_entry):
+        if edit_entry is None:
+            return
+        self.working_entry = edit_entry
+        self.string_edit_dialog.activate(
+            self._change_description,
+            label=_("Please change description for %s:") % edit_entry,
+            initvalue = edit_entry.description )
+        
+    def _change_description(self, value):
+        if value is None or self.working_entry.description == value:
+            return
+        self.working_entry.description = value
+        self.presenter.save_working_entry_action()
+        self.working_entry = None
             
     def get_pdf_file(self):
         return self.file_selection_dialog.activate(self.parent_window, new=True)
 
-    potential_child_ids = property(None, create_new_entry)
-    parent_node = property(get_parent_node)
-    deletion_node = property(get_deletion_node)
-    edit_node = property(get_edit_node)
     pdf_file = property(get_pdf_file)
 
 class SystematicPointSelectionDialog(GenericTreeSelectionDialog):
     
     @inject
-    def __init__(self, presenter: SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY):
-        super().__init__(presenter)
+    def __init__(self,
+                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
+                 presenter: SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY):
+        super().__init__(window_manager, presenter)
 
 class SystematicGuiPluginModule(SystematicBasePluginModule):
     '''
