@@ -3,13 +3,9 @@ Created on 13.12.2015
 
 @author: michael
 '''
-from alexandriabase.domain import AlexDate
-from tkgui.mainwindows.BaseWindow import BaseWindow
 from acceptance.AcceptanceTestUtils import BaseAcceptanceTest, AcceptanceTestRunner
-from tkgui.mainwindows import EventWindow
-import os
 from alexplugins.cdexporter.tkgui import CHRONO_DIALOG_KEY,\
-    EXPORT_INFO_DIALOG_KEY, EXPORT_INFO_WIZARD_CLASS_KEY
+    EXPORT_INFO_WIZARD_CLASS_KEY
 from alexplugins.cdexporter.base import CD_EXPORT_CONFIG_KEY
 from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
 
