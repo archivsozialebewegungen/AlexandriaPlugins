@@ -47,7 +47,7 @@ class ServiceTest(unittest.TestCase):
         
         identifier = SystematicIdentifier("1.2", 3, 4)
         self.systematic_dao.get_node = MagicMock(return_value=SystematicPoint(identifier, "description"))
-        entry = self.service._fetch_systematic_entry_for_id_string("1.2.III-4")
+        entry = self.service.fetch_systematic_entry_for_id_string("1.2.III-4")
         self.systematic_dao.get_node.assert_called_once_with(identifier)
         self.assertEqual(entry.id, identifier)
         self.assertEqual(entry.description, "description")
