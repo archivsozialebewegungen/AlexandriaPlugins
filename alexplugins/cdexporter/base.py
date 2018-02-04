@@ -58,7 +58,7 @@ class ExportInfo:
     def __init__(self):
         self.start_date = None
         self.end_date = None
-        self.location = None
+        self.signature = None
         self.event_filters = []
         self.document_filters = []
         self.additional_event_ids = []
@@ -124,7 +124,7 @@ def export_info_object_hook(obj):
          export_info = ExportInfo()
          export_info.start_date = obj['start_date']
          export_info.end_date = obj['end_date']
-         export_info.location = obj['location']
+         export_info.signature = obj['signature']
          export_info.cd_name = obj['cd_name']
          export_info.pagecontent = obj['pagecontent']
          export_info.start_image = obj['start_image']
@@ -181,8 +181,8 @@ class CDDataAssembler:
         self.messenger.show(_("CD generation: Assembling event and document information..."))
         
         ref_filter = DocumentEventReferenceFilter()
-        if export_info.location:
-            ref_filter.location = "%s" % export_info.location.id
+        if export_info.signature:
+            ref_filter.signature = export_info.signature
         ref_filter.earliest_date = export_info.start_date
         ref_filter.latest_date = export_info.end_date
         
@@ -233,6 +233,8 @@ class ThumbnailRunner:
         number_of_documents = len(data_dict['data']['documents'])
         counter = 0
         percentage_old = -1
+        dir_name = os.path.join(data_dir, 'thumbnails')
+        os.makedirs(dir_name, exist_ok=True)
         for document in data_dict['data']['documents']:
             counter += 1
             percentage = int(counter * 100.0 / number_of_documents)
@@ -241,7 +243,7 @@ class ThumbnailRunner:
                 percentage_old = percentage
             for file_info in document.file_infos:
                 try:
-                    file_name = os.path.join(os.path.join(data_dir, 'thumbnails'),
+                    file_name = os.path.join(dir_name,
                                              "%s.png" % file_info.get_basename())
                     file = open(file_name, "wb")
                     file.write(self.document_service.get_thumbnail(file_info))
@@ -265,6 +267,8 @@ class DisplayFileRunner:
         number_of_documents = len(data_dict['data']['documents'])
         counter = 0
         percentage_old = -1
+        dir_name = os.path.join(data_dir, 'screen')
+        os.makedirs(dir_name, exist_ok=True)
         for document in data_dict['data']['documents']:
             counter += 1
             percentage = int(counter * 100.0 / number_of_documents)
@@ -273,7 +277,7 @@ class DisplayFileRunner:
                 percentage_old = percentage
             for file_info in document.file_infos:
                 try:
-                    file_name = os.path.join(os.path.join(data_dir, 'screen'),
+                    file_name = os.path.join(dir_name,
                                              "%s.png" % file_info.get_basename())
                     file = open(file_name, "wb")
                     file.write(self.document_service.get_display_image(file_info))
@@ -297,6 +301,8 @@ class PdfFileRunner:
         number_of_documents = len(data_dict['data']['documents'])
         counter = 0
         percentage_old = -1
+        dir_name = os.path.join(data_dir, 'pdf')
+        os.makedirs(dir_name, exist_ok=True)
         for document in data_dict['data']['documents']:
             counter += 1
             percentage = int(counter * 100.0 / number_of_documents)
@@ -304,8 +310,7 @@ class PdfFileRunner:
                 self.messenger.show(_("CD generation: Fetching pdf files... %d%% done.") % percentage)
                 percentage_old = percentage
             try:
-                percentage
-                file_name = os.path.join(os.path.join(data_dir, 'pdf'),
+                file_name = os.path.join(dir_name,
                                          "%s.pdf" % expand_id(document.id))
                 file = open(file_name, "wb")
                 file.write(self.document_service.get_pdf(document))
@@ -390,7 +395,7 @@ class GenerationEngine:
         else:
             self.data_dict['has_start_image'] = False
         
-        data_dir = os.path.join(app_dir, 'alexandria')
+        data_dir = os.path.join(app_dir, 'assets')
         
         for runner in self.runners:
             runner.run(data_dir, self.data_dict)

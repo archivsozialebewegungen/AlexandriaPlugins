@@ -8,9 +8,6 @@ from integration.baseintegrationtest import BaseIntegrationTest
 from alexplugins.cdexporter.base import CDExporterBasePluginModule,\
     EXPORT_DATA_ASSEMBLER_KEY, ExportInfo
 from alexandriabase.domain import AlexDate
-from injector import Module, ClassProvider, singleton
-from tkgui import guiinjectorkeys
-from alexpresenters.messagebroker import MessageBroker
 
 
 class CDDataAssemblerTest(BaseIntegrationTest):

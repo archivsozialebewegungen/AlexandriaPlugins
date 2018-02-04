@@ -32,6 +32,9 @@ SYSTEMATIC_CHANGED = "systematic changed"
 
 class SystematicDocumentFilterDialog(GenericFilterDialog):
 
+
+    NO_SYSTEMATIC_POINT_SELECTED = _('No systematic point selected')
+    
     @inject
     def __init__(self,
                  window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
@@ -43,24 +46,32 @@ class SystematicDocumentFilterDialog(GenericFilterDialog):
     def create_dialog(self):
         super().create_dialog()
         AlexLabel(self.interior, text=_("Signature:")).grid(row=3, column=0, sticky=W)
-        self.signature_label = AlexLabel(self.interior, text='')
-        self.signature_label.grid(row=3, column=1, sticky=W)
-        self.systematic_button = AlexButton(self.interior, command=self._get_signature)
-        self.systematic_button.set(_("Select"))
-        self.systematic_button.grid(row=3, column=2, sticky=W)
+        self.systematic_button = AlexButton(self.interior, command=self._select_signature)
+        self.systematic_button.set(self.NO_SYSTEMATIC_POINT_SELECTED)
+        self.systematic_button.grid(row=3, column=1, sticky=W)
                    
-    def _get_signature(self):
+    def _select_signature(self):
         self.systematic_dialog.activate(self._set_signature,
-                                                 label=_("Please select systematic point"))
+                                        label=_("Please select systematic point"))
     def _set_signature(self, value):
-        if value != None:
-            self.signature_label.set("%s" % value.id)
+        if value is None:
+            self.systematic_button.set(self.NO_SYSTEMATIC_POINT_SELECTED)
+        else:
+            self.systematic_button.set(value)
+            
+    def _get_signature(self):
+        
+        button_value = self.systematic_button.get()
+        if "%s" % button_value == self.NO_SYSTEMATIC_POINT_SELECTED:
+            return None
+        else:
+            return button_value
             
     def _clear_filter_form(self):
         super()._clear_filter_form()
         self.signature_label.set('')
     
-    signature = property(lambda self: self.signature_label.get())
+    signature = property(_get_signature, _set_signature)
 
 class DocumentSystematicReferencesPresenter:
 

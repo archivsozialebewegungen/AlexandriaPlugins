@@ -8,7 +8,7 @@ import re
 from injector import inject, Module, ClassProvider, singleton
 from sqlalchemy.sql.schema import Table, Column, ForeignKey,\
     ForeignKeyConstraint, UniqueConstraint
-from sqlalchemy.sql.expression import select, delete, insert, update, and_
+from sqlalchemy.sql.expression import select, delete, insert, update, and_, or_
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.sqltypes import Integer, String
 from reportlab.platypus.doctemplate import SimpleDocTemplate
@@ -23,6 +23,7 @@ from alexandriabase.domain import Tree, NoSuchNodeException
 from alexplugins.systematic import ROMAN_NUMERALS, SYSTEMATIC_DAO_KEY,\
     DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY, SYSTEMATIC_SERVICE_KEY,\
     SYSTEMATIC_PDF_GENERATION_SERVICE_KEY
+from alexandriabase.daos.documentdao import DocumentFilterExpressionBuilder
 
 SYSTEMATIC_TABLE = Table(
     'systematik', ALEXANDRIA_METADATA,
@@ -292,6 +293,25 @@ class SystematicPoint:
         return self.id >= other.id
 
     parent_id = property(lambda self: self.id.parent_id)
+
+class SystematicDocumentFilterExpressionBuilder(DocumentFilterExpressionBuilder):
+    '''
+    Changes the building of the signature expression appropriate
+    to systematic point signatures.
+    '''
+    
+    def _build_signature_expression(self, document_filter):
+        '''
+        Creates a signature expression.
+        '''
+        if not document_filter.signature:
+            return None
+        signature = "%s" % document_filter.signature.id
+        return or_(self.table.c.standort == signature,
+                   self.table.c.standort.startswith("%s." % signature),
+                   self.table.c.standort.startswith("%s-" % signature))
+
+
 
 class SystematicDao(GenericDao):
     '''
@@ -635,11 +655,11 @@ class SystematicService:
         Does what the name says.
         '''
         if qualified_systematic_entry.is_physical_node:
-            self._delete_location_from_document(document)
+            self._delete_signature_from_document(document)
         else:
             self._delete_systematic_entry_from_relations(document, qualified_systematic_entry)
             
-    def _delete_location_from_document(self, document):
+    def _delete_signature_from_document(self, document):
         '''
         Removes signature from document.
         '''
@@ -656,7 +676,7 @@ class SystematicService:
             qualified_systematic_entry.id,
             document.id)
 
-    def _fetch_systematic_entry_for_id_string(self, id_as_string):
+    def fetch_systematic_entry_for_id_string(self, id_as_string):
         '''
         Normally the id of a systematic entry is an object. But this
         object has a string representation that might be used instead.
@@ -797,6 +817,7 @@ class SystematicPdfGenerationService(object):
         story.append(paragraph)
         return story
 
+        
 class SystematicBasePluginModule(Module):
     '''
     Injector module to bind the plugin keys
@@ -812,3 +833,6 @@ class SystematicBasePluginModule(Module):
         binder.bind(SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,
                     ClassProvider(SystematicPdfGenerationService), scope=singleton)
 
+        binder.bind(baseinjectorkeys.DOCUMENT_FILTER_EXPRESSION_BUILDER_KEY,
+                    ClassProvider(SystematicDocumentFilterExpressionBuilder),
+                    scope=singleton)

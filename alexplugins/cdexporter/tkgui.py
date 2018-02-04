@@ -4,11 +4,10 @@ Created on 10.11.2016
 @author: michael
 '''
 from tkinter.constants import LEFT
-import Pmw
 
-from injector import Key, ClassProvider, singleton, inject, provider
+from injector import Key, ClassProvider, singleton, inject
 from tkgui.components.alexwidgets import AlexLabel, AlexEntry, AlexDateEntry,\
-    AlexText, AlexButton
+    AlexText, AlexButton, AlexRadioGroup
 from tkgui import guiinjectorkeys
 from alexandriabase.domain import AlexDate
 from alexplugins.cdexporter.base import GENERATOR_ENGINE_KEY, \
@@ -22,14 +21,14 @@ import datetime
 from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
 from alexpresenters.DialogPresenters import AbstractInputDialogPresenter
 from tkgui.Dialogs import AbstractInputDialog, Wizard
+from alexandriabase import baseinjectorkeys
 
 CHRONO_DIALOG_KEY = Key('chrono_dialog')
 CHRONO_DIALOG_PRESENTER_KEY = Key('chrono_dialog_presenter')
 
 CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY = Key('cd_exporter_plugin_chrono_presenter')
 
-EXPORT_INFO_DIALOG_KEY = Key('export_wizard')
-EXPORT_INFO_WIZARD_CLASS_KEY = Key('export_info_wizard_class')
+EXPORT_INFO_WIZARD_KEY = Key('export_wizard')
 EXPORT_INFO_WIZARD_PRESENTER = Key('export_info_wizard_presenter')
 
 CD_EXPORTER_MENU_ADDITIONS_GENERIC_PRESENTER_KEY = Key('cd_exporter_plugin_generic_presenter')
@@ -42,6 +41,12 @@ class ChronoInfo(object):
     def __init__(self):
         self.quarter = 0
         self.year = 0
+        
+    def __str__(self):
+        
+        return "%d. %s %d" % (self.quarter, 
+                              _('Quarter'),
+                              self.year)
 
 class MessageBarMessenger():
     '''
@@ -67,7 +72,7 @@ class ChronoDialogPresenter(AbstractInputDialogPresenter):
     chronology to produce.
     '''
     
-    def assemble_return_value(self):
+    def ok_action(self):
         chrono_info = ChronoInfo()
         chrono_info.quarter = self.view.quarter
         chrono_info.year = self.view.year
@@ -94,45 +99,27 @@ class ChronoDialog(AbstractInputDialog):
         
         super().__init__(window_manager, presenter)
         
-    def _init_dialog(self, master):
-        # We want to reuse the filter dialog if it already exists
-        if self.dialog != None:
-            return
-        # pylint: disable=no-member
-        self.dialog = Pmw.Dialog(  # @UndefinedVariable
-            buttons=(_("Create chronology"), _("Cancel")))
+    def create_dialog(self):
+        super().create_dialog()
         
-        self.quarter_select = Pmw.RadioSelect(  # @UndefinedVariable
-                self.dialog.interior(),
-                command=self.set_current_quarter,
-                labelpos = 'w',
-                label_text = _('Quarter'),
-        )
-        self.quarter_select.pack(fill='x', 
-                                 padx=10, 
-                                 pady=10)
+        AlexButton(self.buttons_frame, text=_("Create chronology"),
+                   command=self.presenter.ok_action).pack(side=LEFT)
+        AlexButton(self.buttons_frame, text=_("Cancel"),
+                   command=self.presenter.cancel_action).pack(side=LEFT)
+        
+        self.quarter_select = AlexRadioGroup(self.interior,
+                                             title=_('Quarter'),
+                                             choices=self.quarters)
+        self.quarter_select.pack()
 
-        # Add some buttons to the horizontal RadioSelect.
-        for quarter in self.quarters:
-            self.quarter_select.add(quarter)
-        self.quarter_select.invoke(self.quarters[self.current_quarter - 1])
-        AlexLabel(self.dialog.interior(),
+        AlexLabel(self.interior,
                   text=_(_("Year"))).pack(side=LEFT, padx=10, pady=10)
-        self.year_entry = AlexEntry(self.dialog.interior())
+        self.year_entry = AlexEntry(self.interior)
         self.year_entry.pack(side=LEFT, padx=10, pady=10)
 
 
-    def set_current_quarter(self, label):
-        '''
-        Callback for the quarter buttons
-        with a sort of hackish implementation
-        to get the quarter from the button label.
-        '''
-        
-        self.current_quarter = int(label[-1:])
-        
     def _get_quarter(self):
-        return self.current_quarter
+        return self.quarter_select.get() + 1
     
     def _get_year(self):
         try:
@@ -144,39 +131,33 @@ class ChronoDialog(AbstractInputDialog):
     quarter = property(_get_quarter)
     year = property(_get_year)
     
-class ExportInfoDialog:
-    
-    @inject
-    def __init__(self,
-                 wizard_class: EXPORT_INFO_WIZARD_CLASS_KEY,
-                 wizard_presenter: EXPORT_INFO_WIZARD_PRESENTER,
-                 location_selection_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY):
-        
-        self.wizard_class = wizard_class
-        self.wizard_presenter = wizard_presenter
-        self.location_selection_dialog = location_selection_dialog
-        
-    def activate(self, master, export_info):
-        
-        self.wizard_class(master, export_info, self.wizard_presenter, self.location_selection_dialog)
-        return self.wizard_presenter.export_info
-
-class ExportInfoWizardPresenter:
+class ExportInfoWizardPresenter(AbstractInputDialogPresenter):
     
     def __init__(self):
         self.view = None
-        self.export_info = None
     
-    def close(self):
-        self.export_info = self.view.export_info
-        self.view.close()
+    def ok_action(self):
+        
+        self.view.return_value = self.view.export_info
 
 class ExportInfoWizard(Wizard):
     
-    def __init__(self, master, export_info, presenter, location_dialog):
-        super().__init__(master, presenter, number_of_pages=6, geometry="500x200")
+    NO_SIGNATURE_SELECTED = _('No signature selected')
+    NO_IMAGE_SELECTED = _('No title image selected')
+    
+    @inject
+    def __init__(self,
+                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
+                 presenter: EXPORT_INFO_WIZARD_PRESENTER,
+                 signature_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY):
         
-        self.location_dialog = location_dialog
+        super().__init__(window_manager, presenter, number_of_pages=6, geometry="500x200")
+        
+        self.signature_dialog = signature_dialog
+
+    def create_dialog(self, export_info):
+        
+        super().create_dialog()        
         
         # Wizard page 1
         Label(self.pages[0], text=_("Start creating a CD")).pack(padx=5, pady=5)
@@ -207,62 +188,49 @@ class ExportInfoWizard(Wizard):
         self.end_date_entry.pack()
         
         # Wizard page 5
-        Label(self.pages[4], text=_("Please select a location")).pack(padx=5, pady=5)
-        self.location = None
-        self.location_button = AlexButton(self.pages[4], command=self._select_location)
-        self.location_button.set(_("No location selected"))
-        self.location_button.pack()
+        Label(self.pages[4], text=_("Please select a signature")).pack(padx=5, pady=5)
+        self.signature_button = AlexButton(
+            self.pages[4], 
+            command=lambda: self.signature_dialog.activate(self._signature_callback, label=_("Select a signature")))
+        self.signature_button.pack()
         
         # Wizard page 6
         Label(self.pages[5], text=_("Please select a title image")).pack(padx=5, pady=5)
         self.start_image_button = AlexButton(self.pages[5], command=self._get_start_image_file)
-        self.start_image_button.set(_("No title image selected"))
         self.start_image_button.pack()
-        #Label(self.pages[5], text=_("Textsearch")).pack(padx=5, pady=5)
-        #entry_frame = Frame(self.pages[5])
-        #self.search_entries = []
-        #for i in range(1,4):
-        #    Label(entry_frame, text=_("%d. search expression:") % i).grid(row=i-1, column=0)
-        #    self.search_entries.append(AlexEntry(entry_frame))
-        #    self.search_entries[-1].grid(row=i-1, column=1)
-        #entry_frame.pack()
-        
+
         self.export_info = export_info
         
-        self.wait_window(self)
-
+    def _signature_callback(self, signature):
+        
+        if signature is not None:
+            self.signature_button.set(signature)
+        
     def _get_start_image_file(self):
         
+        self.window.attributes('-topmost', False)
         new_start_image = askopenfilename(filetypes=[(_("Image file"), ".jpg")])
+        self.window.attributes('-topmost', True)
+
         if new_start_image:
             self.start_image = new_start_image
-        self._configure_start_image_button()
 
-    def _configure_start_image_button(self):    
-        if not self.start_image:
-            self.start_image_button.set(_("No start image selected"))
-        else:
-            self.start_image_button.set("%s" % self.start_image)
-    
-    def _select_location(self):
-
-        new_location = self.location_dialog.activate(self)
-        if new_location:
-            self.location = new_location
-        self._configure_location_button()       
+    def _select_signature(self):
         
-    def _configure_location_button(self):    
-        if not self.location:
-            self.location_button.set(_("No location selected"))
-        else:
-            self.location_button.set("%s" % self.location)
-    
+        self.signature_dialog.activate(self, self._select_signature_callback)
+
+    def _select_signature_callback(self, signature):
+
+        if signature:
+            self.signature = self.signature_service.object_to_id(signature)
+        
     def _get_export_info(self):
+        
         export_info = ExportInfo()
         export_info.cd_name = self.name_entry.get()
         export_info.start_date = self.start_date_entry.get()
         export_info.end_date = self.end_date_entry.get()
-        export_info.location = self.location
+        export_info.signature = self.signature
         export_info.start_image = self.start_image
         export_info.pagecontent['startpage'] = self.start_page_entry.get()
         export_info.pagecontent['imprint'] = self.imprint_entry.get()
@@ -273,12 +241,46 @@ class ExportInfoWizard(Wizard):
         self.name_entry.set(export_info.cd_name)
         self.start_date_entry.set(export_info.start_date)
         self.end_date_entry.set(export_info.end_date)
-        self.location = export_info.location
+        self.signature = export_info.signature
         self.start_image = export_info.start_image
-        self._configure_location_button()
         self.start_page_entry.set(export_info.pagecontent['startpage'])
         self.imprint_entry.set(export_info.pagecontent['imprint'])
 
+    def _get_signature(self):
+        
+        signature = self.signature_button.get()
+        
+        if "%s" % signature == self.NO_SIGNATURE_SELECTED:
+            return None
+        
+        return signature
+     
+    
+    def _set_signature(self, signature):
+        
+        if signature is None:
+            self.signature_button.set(self.NO_SIGNATURE_SELECTED)
+        else:
+            self.signature_button.set(signature)
+            
+    def _get_start_image(self):
+        
+        start_image = self.start_image_button.get()
+        
+        if start_image == self.NO_IMAGE_SELECTED:
+            return None
+        
+        return start_image 
+    
+    def _set_start_image(self, start_image):
+        
+        if start_image is None:
+            self.start_image_button.set(self.NO_IMAGE_SELECTED)
+        else:
+            self.start_image_button.set(start_image)
+
+    signature = property(_get_signature, _set_signature)
+    start_image = property(_get_start_image, _set_start_image)
     export_info = property(_get_export_info, _set_export_info)
 
 class ChronoTextGenerator:
@@ -321,8 +323,8 @@ class CDExporterMenuAdditionsPresenter(object):
     def __init__(self,
                  message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
                  generation_engine: GENERATOR_ENGINE_KEY,
-                text_generator: TEXT_GENERATOR_KEY,
-                window_manager: WINDOW_MANAGER_KEY):
+                 text_generator: TEXT_GENERATOR_KEY,
+                 window_manager: WINDOW_MANAGER_KEY):
         self.view = None
         self.message_broker = message_broker
         self.generation_engine = generation_engine
@@ -351,18 +353,15 @@ class CDExporterMenuAdditionsPresenter(object):
 
         self._start_export(export_info)            
     
-    def create_cd_definition(self):
+    def save_cdd_file(self):
         
-        export_info = self.view.export_info
-        if not export_info:
-            return
+        self.view.export_info.save_to_file(self.view.cdd_file)
+
+    def load_cdd_file(self):
         
-        file_name = self.view.new_export_info_file
-        if not file_name:
-            return
+        self.view.export_info = load_export_info(self.view.cdd_file)
         
-        export_info.save_to_file(file_name)
-        
+                
     def edit_cd_definition(self):
 
         file_name = self.view.existing_export_info_file
@@ -417,7 +416,7 @@ class CDExporterMenuAdditions(EventMenuAddition):
     def __init__(self,
                  presenter: CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY,
                  chrono_dialog: CHRONO_DIALOG_KEY,
-                 export_info_dialog: EXPORT_INFO_DIALOG_KEY):
+                 export_info_dialog: EXPORT_INFO_WIZARD_KEY):
 
         self.presenter = presenter
         self.presenter.view = self
@@ -427,7 +426,9 @@ class CDExporterMenuAdditions(EventMenuAddition):
         
         self.parent_window = None
         
-        self._export_info = ExportInfo()
+        self.chrono_info = None
+        self.cdd_file = None
+        self.export_info = ExportInfo()
         
     def attach_to_window(self, parent_window):
         '''
@@ -443,31 +444,53 @@ class CDExporterMenuAdditions(EventMenuAddition):
             
         menubar.addmenuitem(_('Export'), 'command', '',
                             label=_('Export chronology'),
-                            command=self.presenter.export_chronology)
+                            command=self.start_chrono_export)
             
         menubar.addmenuitem(_('Export'), 'command', '',
                             label=_('Create CD definition'),
-                            command=self.presenter.create_cd_definition)
+                            command=self.create_cd_definition)
         menubar.addmenuitem(_('Export'), 'command', '',
                             label=_('Edit CD definition'),
-                            command=self.presenter.edit_cd_definition)
+                            command=self.edit_cd_definition)
         menubar.addmenuitem(_('Export'), 'command', '',
                             label=_('Create CD from definition'),
                             command=self.presenter.create_cd_from_definition)
 
-    def _get_chrono_info(self):
+    def start_chrono_export(self):
         
-        return self.chrono_dialog.activate(self.parent_window)
+        self.chrono_dialog.activate(self.chrono_export_callback)
     
-    def _set_export_info(self, export_info):
+    def chrono_export_callback(self, chrono_info):
         
-        self._export_info = export_info
+        self.chrono_info = chrono_info
+        self.presenter.export_chronology()
     
-    def _get_export_info(self):
+    def create_cd_definition(self):
         
-        self._export_info = self.export_info_dialog.activate(self.parent_window, self._export_info)
-        return self._export_info
-    
+        self.export_info_dialog.activate(self.save_export_info_callback, export_info=self.export_info)
+        
+    def edit_cd_definition(self):
+        
+        self.cdd_file = askopenfilename(filetypes=[(_("CD definition file"), ".cdd")])
+        
+        if self.cdd_file is None:
+            return
+        self.presenter.load_cdd_file()
+        
+        self.export_info_dialog.activate(self.save_export_info_callback, export_info=self.export_info)
+
+    def save_export_info_callback(self, export_info):
+        
+        self.export_info = export_info
+        
+        if export_info is None:
+            return
+        
+        self.cdd_file = asksaveasfilename(defaultextension='.cdd', 
+                                          filetypes=[(_("CD definition file"), ".cdd")])
+        if self.cdd_file:
+            self.presenter.save_cdd_file()
+        
     def _get_new_export_info_file(self):
         
         return asksaveasfilename(defaultextension='.cdd', 
@@ -477,8 +500,6 @@ class CDExporterMenuAdditions(EventMenuAddition):
         
         return askopenfilename(filetypes=[(_("CD definition file"), ".cdd")])
 
-    chrono_info = property(_get_chrono_info)
-    export_info = property(_get_export_info, _set_export_info)
     new_export_info_file = property(_get_new_export_info_file)
     existing_export_info_file = property(_get_existing_export_info_file)
     
@@ -502,13 +523,8 @@ class CDExporterGuiPluginModule(CDExporterBasePluginModule):
                     ClassProvider(CDExporterMenuAdditionsPresenter), scope=singleton)
         binder.bind(TEXT_GENERATOR_KEY, ClassProvider(ChronoTextGenerator), scope=singleton)
 
-        binder.bind(EXPORT_INFO_DIALOG_KEY,
-                    ClassProvider(ExportInfoDialog), scope=singleton)
+        binder.bind(EXPORT_INFO_WIZARD_KEY,
+                    ClassProvider(ExportInfoWizard), scope=singleton)
         binder.bind(EXPORT_INFO_WIZARD_PRESENTER,
                     ClassProvider(ExportInfoWizardPresenter), scope=singleton)
                
-    @provider
-    def getExportInfoWizardClass(self) -> EXPORT_INFO_WIZARD_CLASS_KEY:
-        
-        return ExportInfoWizard
-    
