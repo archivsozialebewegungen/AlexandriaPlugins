@@ -17,13 +17,13 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus.paragraph import Paragraph
 from alexandriabase import baseinjectorkeys
 from alexandriabase.base_exceptions import DataError
-from alexandriabase.daos.basedao import GenericDao
-from alexandriabase.daos.metadata import ALEXANDRIA_METADATA, DOCUMENT_TABLE
+from alexandriabase.daos import GenericDao, ALEXANDRIA_METADATA,\
+    DocumentFilterExpressionBuilder, DOCUMENT_TABLE
 from alexandriabase.domain import Tree, NoSuchNodeException
+from alexplugins import _
 from alexplugins.systematic import ROMAN_NUMERALS, SYSTEMATIC_DAO_KEY,\
     DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY, SYSTEMATIC_SERVICE_KEY,\
     SYSTEMATIC_PDF_GENERATION_SERVICE_KEY
-from alexandriabase.daos.documentdao import DocumentFilterExpressionBuilder
 
 SYSTEMATIC_TABLE = Table(
     'systematik', ALEXANDRIA_METADATA,

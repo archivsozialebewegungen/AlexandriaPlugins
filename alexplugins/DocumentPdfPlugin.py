@@ -5,8 +5,9 @@ Created on 29.04.2016
 '''
 from tkgui import guiinjectorkeys
 from injector import inject, Module, ClassProvider, singleton, Key
+from alexplugins import _
 from alexpresenters.messagebroker import ERROR_MESSAGE, Message
-from alexandriabase.services.documentfilemanager import DocumentFileNotFound
+from alexandriabase.services import DocumentFileNotFound
 from tempfile import NamedTemporaryFile
 from alexandriabase import baseinjectorkeys
 from tkgui.PluginManager import DocumentMenuAddition

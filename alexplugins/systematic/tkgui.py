@@ -11,6 +11,7 @@ from alexandriabase.domain import NoSuchNodeException
 from tkgui.References import ReferencesWidgetFactory, ReferenceView, Action
 from alexplugins.systematic import SYSTEMATIC_SERVICE_KEY,\
     SYSTEMATIC_PDF_GENERATION_SERVICE_KEY
+from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint,\
     SystematicBasePluginModule
 from tkgui.components.alexwidgets import AlexLabel, AlexButton

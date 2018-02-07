@@ -6,7 +6,7 @@ Created on 11.10.2015
 from sqlalchemy.sql.expression import select
 import unittest
 
-from alexandriabase.daos.metadata import DOCUMENT_TABLE
+from alexandriabase.daos import DOCUMENT_TABLE
 from daotests.test_base import DatabaseBaseTest
 from alex_test_utils import load_table_data
 from alexplugins.systematic.base import DocumentSystematicRelationsDao,\

@@ -13,6 +13,7 @@ import pytest
 from alexpresenters.messagebroker import ERROR_MESSAGE, Message,\
     CONF_DOCUMENT_CHANGED
 from alexandriabase import baseinjectorkeys
+from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from alexplugins.systematic.tkgui import SystematicGuiPluginModule,\
     SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY, SystematicPointSelectionDialog,\

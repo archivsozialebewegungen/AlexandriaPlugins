@@ -6,7 +6,7 @@ Created on 18.10.2015
 import unittest
 from unittest.mock import MagicMock
 
-from alexandriabase.daos.documentdao import DocumentDao
+from alexandriabase.daos import DocumentDao
 from alexandriabase.domain import Document, Node, NoSuchNodeException
 from alexplugins.systematic.base import SystematicIdentifier, SystematicPoint,\
     QualifiedSystematicPoint, SystematicDao, DocumentSystematicRelationsDao,\

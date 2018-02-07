@@ -10,6 +10,7 @@ from tkgui.components.alexwidgets import AlexLabel, AlexEntry, AlexDateEntry,\
     AlexText, AlexButton, AlexRadioGroup
 from tkgui import guiinjectorkeys
 from alexandriabase.domain import AlexDate
+from alexplugins import _
 from alexplugins.cdexporter.base import GENERATOR_ENGINE_KEY, \
     ExportInfo, CDExporterBasePluginModule, MESSENGER_KEY,\
     TEXT_GENERATOR_KEY, load_export_info

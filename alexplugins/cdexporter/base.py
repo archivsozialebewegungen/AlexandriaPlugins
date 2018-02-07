@@ -16,10 +16,11 @@ from injector import Key, Module, ClassProvider, singleton, inject, provider
 from alexandriabase.domain import expand_id, AlexDate,\
     DocumentEventReferenceFilter
 from alexandriabase import baseinjectorkeys
-from alexandriabase.services.documentfilemanager import DocumentFileNotFound
-from alexandriabase.daos.metadata import DOCUMENT_TABLE, EVENT_TABLE
+from alexandriabase.services import DocumentFileNotFound
+from alexandriabase.daos import DOCUMENT_TABLE, EVENT_TABLE
 from alexandriabase.baseinjectorkeys import CONFIG_KEY
 from alexandriabase.config import NoSuchConfigValue
+from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from shutil import copyfile
 import logging
