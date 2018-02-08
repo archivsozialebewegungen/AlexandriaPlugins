@@ -8,7 +8,7 @@ from alexplugins.systematic.tkgui import SystematicPointSelectionPresenter,\
     DocumentSystematicReferenceView
 from tkinter import Button
 from manual_tester import AbstractComponentTest, TestRunner
-from alexpresenters.messagebroker import Message, REQ_SET_DOCUMENT
+from alexpresenters.MessageBroker import Message, REQ_SET_DOCUMENT
 from alexandriabase.domain import Document, Tree
 from tkinter.constants import TOP
 from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier

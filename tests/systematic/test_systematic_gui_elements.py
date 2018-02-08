@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 import os
 import tempfile
 import pytest
-from alexpresenters.messagebroker import ERROR_MESSAGE, Message,\
+from alexpresenters.MessageBroker import ERROR_MESSAGE, Message,\
     CONF_DOCUMENT_CHANGED
 from alexandriabase import baseinjectorkeys
 from alexplugins import _
@@ -20,7 +20,7 @@ from alexplugins.systematic.tkgui import SystematicGuiPluginModule,\
     DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY,\
     DocumentSystematicReferenceView, SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY
 from alexplugins.systematic import SYSTEMATIC_SERVICE_KEY, SYSTEMATIC_DAO_KEY
-from alexpresenters import PresentersModule
+from alexpresenters.Module import PresentersModule
 from alex_test_utils import load_table_data
 
 class SystematicServiceStub:

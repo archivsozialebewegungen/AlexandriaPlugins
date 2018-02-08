@@ -10,7 +10,7 @@ from alexplugins.systematic.tkgui import DocumentSystematicReferencesPresenter,\
     DocumentSystematicReferenceView
 from tkinter.constants import TOP
 from tkinter.ttk import Button
-from alexpresenters.messagebroker import Message, REQ_SET_DOCUMENT
+from alexpresenters.MessageBroker import Message, REQ_SET_DOCUMENT
 from alexandriabase.domain import Document
 
 class DocumentSystematicReferencesTest(ReferenceComponentTest):

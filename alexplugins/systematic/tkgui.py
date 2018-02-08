@@ -5,7 +5,7 @@ Created on 05.11.2016
 '''
 from injector import inject, Key, ClassProvider, singleton, InstanceProvider
 from tkgui import guiinjectorkeys
-from alexpresenters.messagebroker import CONF_DOCUMENT_CHANGED, Message,\
+from alexpresenters.MessageBroker import CONF_DOCUMENT_CHANGED, Message,\
     ERROR_MESSAGE, REQ_SAVE_CURRENT_DOCUMENT
 from alexandriabase.domain import NoSuchNodeException
 from tkgui.References import ReferencesWidgetFactory, ReferenceView, Action
@@ -14,7 +14,7 @@ from alexplugins.systematic import SYSTEMATIC_SERVICE_KEY,\
 from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint,\
     SystematicBasePluginModule
-from tkgui.components.alexwidgets import AlexLabel, AlexButton
+from tkgui.AlexWidgets import AlexLabel, AlexButton
 from tkinter.constants import W
 from tkgui.PluginManager import DocumentMenuAddition,\
     DocumentReferenceFactory

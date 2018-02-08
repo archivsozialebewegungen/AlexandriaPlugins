@@ -8,7 +8,7 @@ from integration.baseintegrationtest import BaseIntegrationTest
 from unittest.mock import MagicMock
 from alexandriabase import baseinjectorkeys
 from genericpath import isfile
-from alexpresenters import PresentersModule
+from alexpresenters.Module import PresentersModule
 from alex_test_utils import TestEnvironment, MODE_FULL
 from alexplugins.DocumentPdfPlugin import DocumentPdfPluginModule,\
     DOCUMENT_PDF_PLUGIN_PRESENTER_KEY

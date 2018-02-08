@@ -6,7 +6,7 @@ Created on 15.01.2017
 import unittest
 from tempfile import NamedTemporaryFile
 from alexplugins.cdexporter.tkgui import ChronoCDExporterMenuAdditionsPresenter
-from alexpresenters.messagebroker import MessageBroker
+from alexpresenters.MessageBroker import MessageBroker
 from unittest.mock import MagicMock
 from alexplugins.cdexporter.base import GenerationEngine, ExportInfo
 from alexandriabase.domain import AlexDate

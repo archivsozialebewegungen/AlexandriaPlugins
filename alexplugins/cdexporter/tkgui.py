@@ -6,7 +6,7 @@ Created on 10.11.2016
 from tkinter.constants import LEFT
 
 from injector import Key, ClassProvider, singleton, inject
-from tkgui.components.alexwidgets import AlexLabel, AlexEntry, AlexDateEntry,\
+from tkgui.AlexWidgets import AlexLabel, AlexEntry, AlexDateEntry,\
     AlexText, AlexButton, AlexRadioGroup
 from tkgui import guiinjectorkeys
 from alexandriabase.domain import AlexDate
