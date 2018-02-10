@@ -146,12 +146,13 @@ class DocumentSystematicReferencesWidgetFactory(ReferencesWidgetFactory, Documen
     def __init__(self,
                  view_class: DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY,
                  presenter: DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY,
-                 systematic_point_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY):
-        super().__init__(view_class, presenter, systematic_point_dialog)
+                 systematic_point_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY,
+                 deletion_dialog: guiinjectorkeys.GENERIC_BOOLEAN_SELECTION_DIALOG_KEY):
+        super().__init__(view_class, presenter, systematic_point_dialog, deletion_dialog)
         
 class DocumentSystematicReferenceView(ReferenceView):
     
-    def __init__(self, parent, presenter, systematic_point_dialog):
+    def __init__(self, parent, presenter, systematic_point_dialog, deletion_dialog):
         super().__init__(
             parent,
             presenter,
@@ -160,8 +161,9 @@ class DocumentSystematicReferenceView(ReferenceView):
         self.view = None
         self.new_systematic_point = None
         self.systematic_point_dialog = systematic_point_dialog
+        self.deletion_dialog = deletion_dialog
         self.add_button(Action(_('New'), self._select_a_new_systematic_point))
-        self.add_button(Action(_('Delete'), self.presenter.delete_selected_systematic_point))
+        self.add_button(Action(_('Delete'), self._delete_selected_systematic_point))
         
     def _select_a_new_systematic_point(self):
         
@@ -173,6 +175,16 @@ class DocumentSystematicReferenceView(ReferenceView):
             self.new_systematic_point = value
             self.presenter.add_new_systematic_point()
             self.new_systematic_point = None
+            
+    def _delete_selected_systematic_point(self):
+        
+        self.deletion_dialog.activate(self._delete_selected_systematic_point_callback,
+                                      question=_('Do you really want to unlink\nthe systematic point?'))
+        
+    def _delete_selected_systematic_point_callback(self, value):
+        
+        if value:
+            self.presenter.delete_selected_systematic_point()
 
 class SystematicPointSelectionPresenter(GenericTreeSelectionPresenter):
     
