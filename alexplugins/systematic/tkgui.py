@@ -18,7 +18,7 @@ from tkgui.AlexWidgets import AlexLabel, AlexButton
 from tkinter.constants import W
 from tkgui.PluginManager import DocumentMenuAddition,\
     DocumentReferenceFactory
-from tkgui.Dialogs import GenericFilterDialog, GenericTreeSelectionDialog
+from tkgui.Dialogs import GenericTreeSelectionDialog, BasicDocumentFilterDialog
 from alexpresenters.DialogPresenters import GenericTreeSelectionPresenter
 
 SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY = Key('systematic_point_selection_presenter')
@@ -31,8 +31,7 @@ DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY = Key('document_systematic_referen
 
 SYSTEMATIC_CHANGED = "systematic changed"
 
-class SystematicDocumentFilterDialog(GenericFilterDialog):
-
+class SystematicDocumentFilterDialog(BasicDocumentFilterDialog):
 
     NO_SYSTEMATIC_POINT_SELECTED = _('No systematic point selected')
     
@@ -44,35 +43,31 @@ class SystematicDocumentFilterDialog(GenericFilterDialog):
         super().__init__(window_manager, presenter)
         self.systematic_dialog = systematic_dialog
 
-    def create_dialog(self):
-        super().create_dialog()
-        AlexLabel(self.interior, text=_("Signature:")).grid(row=3, column=0, sticky=W)
-        self.systematic_button = AlexButton(self.interior, command=self._select_signature)
-        self.systematic_button.set(self.NO_SYSTEMATIC_POINT_SELECTED)
-        self.systematic_button.grid(row=3, column=1, sticky=W)
+    def create_signature_entry(self):
                    
+        AlexLabel(self.interior, text=_("Signature:")).grid(row=3, column=0, sticky=W)
+        self.signature_widget = AlexButton(self.interior, command=self._select_signature)
+        self.signature_widget.set(self.NO_SYSTEMATIC_POINT_SELECTED)
+        self.signature_widget.grid(row=3, column=1, sticky=W)
+
     def _select_signature(self):
         self.systematic_dialog.activate(self._set_signature,
                                         label=_("Please select systematic point"))
     def _set_signature(self, value):
         if value is None:
-            self.systematic_button.set(self.NO_SYSTEMATIC_POINT_SELECTED)
+            self.signature_widget.set(self.NO_SYSTEMATIC_POINT_SELECTED)
         else:
-            self.systematic_button.set(value)
+            self.signature_widget.set(value)
             
     def _get_signature(self):
         
-        button_value = self.systematic_button.get()
+        button_value = self.signature_widget.get()
         if "%s" % button_value == self.NO_SYSTEMATIC_POINT_SELECTED:
             return None
         else:
             return button_value
             
-    def _clear_filter_form(self):
-        super()._clear_filter_form()
-        self.signature_label.set('')
     
-    signature = property(_get_signature, _set_signature)
 
 class DocumentSystematicReferencesPresenter:
 
