@@ -1,0 +1,326 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-02-15 17:04+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: alexplugins/systematic/base.py:353
+msgid "Archiv soziale Bewegungen"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:36
+msgid "No systematic point selected"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:48
+msgid "Signature:"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:55
+msgid "Please select systematic point"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:100
+#, python-format
+msgid "No systematic point %s"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:154 alexplugins/systematic/tkgui.py:294
+#: alexplugins/systematic/tkgui.py:295 alexplugins/systematic/tkgui.py:298
+#: alexplugins/systematic/tkgui.py:301 alexplugins/systematic/tkgui.py:304
+msgid "Systematic"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:160
+msgid "New"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:161
+msgid "Delete"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:166
+msgid "Please select a systematic point"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:177
+msgid ""
+"Do you really want to unlink\n"
+"the systematic point?"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:226
+msgid "No description"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:232
+msgid "Systematic entry with children may not be deleted"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:235
+msgid "Can't delete entry when sibling exists"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:238
+msgid "Entry which is in use by documents may not be deleted"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:296
+msgid "Create new entry"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:299
+msgid "Delete entry"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:302
+msgid "Edit entry"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:305
+msgid "Export as pdf"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:313
+msgid "Please select parent entry for new entry"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:328
+msgid ""
+"Please select which systematic\n"
+"point you want to create"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:339
+#, python-format
+msgid "Please enter a description for %s:"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:345
+msgid "Please select entry to delete"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:357
+msgid "Please select node to edit"
+msgstr ""
+
+#: alexplugins/systematic/tkgui.py:365
+#, python-format
+msgid "Please change description for %s:"
+msgstr ""
+
+#: alexplugins/DocumentPdfPlugin.py:45
+#, python-format
+msgid "Document %s not found"
+msgstr ""
+
+#: alexplugins/DocumentPdfPlugin.py:74
+msgid "Records"
+msgstr ""
+
+#: alexplugins/DocumentPdfPlugin.py:76
+msgid "Quit"
+msgstr ""
+
+#: alexplugins/DocumentPdfPlugin.py:77
+msgid "Show as pdf"
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:74
+msgid ""
+"\n"
+"No startpage defined\n"
+"====================\n"
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:78
+msgid ""
+"\n"
+"No imprint defined\n"
+"==================\n"
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:86
+msgid "CD Name"
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:88
+msgid "Start date"
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:90
+msgid "End date"
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:182
+msgid "CD generation: Assembling event and document information..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:243
+#, python-format
+msgid "CD generation: Fetching thumbnail files... %d%% done."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:277
+#, python-format
+msgid "CD generation: Fetching display files... %d%% done."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:311
+#, python-format
+msgid "CD generation: Fetching pdf files... %d%% done."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:332
+msgid "CD generation: Sorting events..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:352
+msgid "CD generation: Sorting documents..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:384
+msgid "CD generation started..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:408
+msgid "CD successfully generated"
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:419
+msgid "CD generation: Writing data..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:429
+msgid "CD generation: Copying start image..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:436
+msgid "CD generation: Unzipping app..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:443
+msgid "CD generation: Can't create new cd directory. Aborting."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:454
+msgid "CD generation: Generating iso image..."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:458
+msgid "CD generation: No iso generating program defined. Aborting."
+msgstr ""
+
+#: alexplugins/cdexporter/base.py:466
+msgid "CD generation: Can't remove already existing iso image. Aborting."
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:49 alexplugins/cdexporter/tkgui.py:92
+#: alexplugins/cdexporter/tkgui.py:93 alexplugins/cdexporter/tkgui.py:94
+#: alexplugins/cdexporter/tkgui.py:95 alexplugins/cdexporter/tkgui.py:112
+msgid "Quarter"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:106
+msgid "Create chronology"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:108
+msgid "Cancel"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:117
+msgid "Year"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:146
+msgid "No signature selected"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:147
+msgid "No title image selected"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:164
+msgid "Start creating a CD"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:166
+msgid "Enter a name for the CD:"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:171
+msgid "Start page as markdown:"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:176
+msgid "Impressum as markdown:"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:181
+msgid "Please enter a data range:"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:184
+msgid "Enter start date:"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:188
+msgid "Enter end date:"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:192
+msgid "Please select a signature"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:195
+msgid "Select a signature"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:199
+msgid "Please select a title image"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:213
+msgid "Image file"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:443 alexplugins/cdexporter/tkgui.py:444
+#: alexplugins/cdexporter/tkgui.py:446 alexplugins/cdexporter/tkgui.py:450
+#: alexplugins/cdexporter/tkgui.py:453 alexplugins/cdexporter/tkgui.py:456
+msgid "Export"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:447
+msgid "Export chronology"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:451
+msgid "Create CD definition"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:454
+msgid "Edit CD definition"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:457
+msgid "Create CD from definition"
+msgstr ""
+
+#: alexplugins/cdexporter/tkgui.py:475 alexplugins/cdexporter/tkgui.py:491
+#: alexplugins/cdexporter/tkgui.py:498 alexplugins/cdexporter/tkgui.py:502
+msgid "CD definition file"
+msgstr ""
