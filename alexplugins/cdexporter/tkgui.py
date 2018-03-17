@@ -118,7 +118,6 @@ class ChronoDialog(AbstractInputDialog):
         self.year_entry = AlexEntry(self.interior)
         self.year_entry.pack(side=LEFT, padx=10, pady=10)
 
-
     def _get_quarter(self):
         return self.quarter_select.get() + 1
     
@@ -156,7 +155,7 @@ class ExportInfoWizard(Wizard):
         
         self.signature_dialog = signature_dialog
 
-    def create_dialog(self, export_info):
+    def create_dialog(self):
         
         super().create_dialog()        
         
@@ -200,6 +199,8 @@ class ExportInfoWizard(Wizard):
         self.start_image_button = AlexButton(self.pages[5], command=self._get_start_image_file)
         self.start_image_button.pack()
 
+    def config_dialog(self, export_info=None):
+        
         self.export_info = export_info
         
     def _signature_callback(self, signature):

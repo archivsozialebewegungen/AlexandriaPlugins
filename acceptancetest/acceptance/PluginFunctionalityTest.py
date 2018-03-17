@@ -5,7 +5,8 @@ Created on 13.12.2015
 '''
 from acceptance.AcceptanceTestUtils import BaseAcceptanceTest, AcceptanceTestRunner
 from alexplugins.cdexporter.tkgui import CHRONO_DIALOG_KEY,\
-    EXPORT_INFO_WIZARD_CLASS_KEY
+    EXPORT_INFO_WIZARD_KEY
+from alexplugins import _
 from alexplugins.cdexporter.base import CD_EXPORT_CONFIG_KEY
 from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
 
@@ -58,7 +59,7 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
 
     def check_create_cd_definition(self):
         print("Checking creation of cd defininition...", end="")
-        wizard = self.injector.get(EXPORT_INFO_WIZARD_CLASS_KEY)
+        wizard = self.injector.get(EXPORT_INFO_WIZARD_KEY)
         
         window_manager = self.injector.get(WINDOW_MANAGER_KEY)
         self.wait()
