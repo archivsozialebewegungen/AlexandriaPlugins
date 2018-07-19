@@ -331,16 +331,16 @@ class EventSortRunner:
     def run(self, data_dir, data_dict):
         self.messenger.show(_("CD generation: Sorting events..."))
         events = data_dict['data']['events']
-        events.sort(key=lambda event: event._wikidata_id)
+        events.sort(key=lambda event: event._id)
         for i in range(0, len(events)):
             if i == 0:
-                events[i].previous_id = events[len(events)-1]._wikidata_id
+                events[i].previous_id = events[len(events)-1]._id
             else:
-                events[i].previous_id = events[i-1]._wikidata_id
+                events[i].previous_id = events[i-1]._id
             if i == len(events) - 1:
-                events[i].next_id = events[0]._wikidata_id
+                events[i].next_id = events[0]._id
             else:
-                events[i].next_id = events[i+1]._wikidata_id
+                events[i].next_id = events[i+1]._id
                        
 class DocumentSortRunner:
     
@@ -351,16 +351,16 @@ class DocumentSortRunner:
     def run(self, data_dir, data_dict):
         self.messenger.show(_("CD generation: Sorting documents..."))
         documents = data_dict['data']['documents']
-        documents.sort(key=lambda document: document._wikidata_id)
+        documents.sort(key=lambda document: document._id)
         for i in range(0, len(documents)):
             if i == 0:
-                documents[i].previous_id = documents[len(documents)-1]._wikidata_id
+                documents[i].previous_id = documents[len(documents)-1]._id
             else:
-                documents[i].previous_id = documents[i-1]._wikidata_id
+                documents[i].previous_id = documents[i-1]._id
             if i == len(documents) - 1:
-                documents[i].next_id = documents[0]._wikidata_id
+                documents[i].next_id = documents[0]._id
             else:
-                documents[i].next_id = documents[i+1]._wikidata_id
+                documents[i].next_id = documents[i+1]._id
             
 class GenerationEngine:
     
