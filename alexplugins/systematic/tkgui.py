@@ -10,7 +10,7 @@ from alexpresenters.MessageBroker import CONF_DOCUMENT_CHANGED, Message,\
 from alexandriabase.domain import NoSuchNodeException
 from tkgui.References import ReferencesWidgetFactory, ReferenceView, Action
 from alexplugins.systematic import SYSTEMATIC_SERVICE_KEY,\
-    SYSTEMATIC_PDF_GENERATION_SERVICE_KEY
+    SYSTEMATIC_PDF_GENERATION_SERVICE_KEY, SYSTEMATIC_HTML_GENERATION_SERVICE_KEY
 from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint,\
     SystematicBasePluginModule
@@ -20,6 +20,7 @@ from tkgui.PluginManager import DocumentMenuAddition,\
     DocumentReferenceFactory
 from tkgui.Dialogs import GenericTreeSelectionDialog, BasicDocumentFilterDialog
 from alexpresenters.DialogPresenters import GenericTreeSelectionPresenter
+from tkinter import filedialog
 
 SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY = Key('systematic_point_selection_presenter')
 SYSTEMATIC_POINT_SELECTION_DIALOG_KEY = Key('systematic_point_selection_dialog')
@@ -208,7 +209,8 @@ class SystematicMenuAdditionsPresenter(object):
     def __init__(self,
                  message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
                  systematic_service: SYSTEMATIC_SERVICE_KEY,
-                 pdf_generation_service: SYSTEMATIC_PDF_GENERATION_SERVICE_KEY):
+                 pdf_generation_service: SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,
+                 html_generation_service: SYSTEMATIC_HTML_GENERATION_SERVICE_KEY):
         '''
         Constructor
         '''
@@ -216,6 +218,7 @@ class SystematicMenuAdditionsPresenter(object):
         self.message_broker = message_broker
         self.systematic_service = systematic_service
         self.pdf_generation_service = pdf_generation_service
+        self.html_generation_service = html_generation_service
         
     def find_potential_child_ids(self):
 
@@ -254,6 +257,13 @@ class SystematicMenuAdditionsPresenter(object):
             return
         self.pdf_generation_service.generate_systematic_pdf(export_file)
         
+    def export_as_html(self):
+        
+        export_dir = self.view.html_dir
+        if export_dir is None or len(export_dir) == 0:
+            return
+        self.html_generation_service.generate_systematic_html(export_dir)
+
     def show_message(self, message):
         
         self.message_broker.send_message(
@@ -304,6 +314,9 @@ class SystematicMenuAdditions(DocumentMenuAddition):
         parent_window.menubar.addmenuitem(_('Systematic'), 'command', '',
                             label=_('Export as pdf'),
                             command=self.presenter.export_as_pdf)
+        parent_window.menubar.addmenuitem(_('Systematic'), 'command', '',
+                            label=_('Export as html'),
+                            command=self.presenter.export_as_html)
 
     def _start_creation(self):
         '''
@@ -373,9 +386,13 @@ class SystematicMenuAdditions(DocumentMenuAddition):
         self.working_entry = None
             
     def get_pdf_file(self):
-        return self.file_selection_dialog.activate(self.parent_window, new=True)
+        return filedialog.asksaveasfilename()
+
+    def get_html_dir(self):
+        return filedialog.askdirectory()
 
     pdf_file = property(get_pdf_file)
+    html_dir = property(get_html_dir)
 
 class SystematicPointSelectionDialog(GenericTreeSelectionDialog):
     
