@@ -306,7 +306,7 @@ class SystematicDocumentFilterExpressionBuilder(DocumentFilterExpressionBuilder)
         '''
         if not document_filter.signature:
             return None
-        signature = "%s" % document_filter.signature.id
+        signature = "%s" % document_filter.signature
         return or_(self.table.c.standort == signature,
                    self.table.c.standort.startswith("%s." % signature),
                    self.table.c.standort.startswith("%s-" % signature))
