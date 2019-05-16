@@ -5,6 +5,7 @@ Created on 05.11.2016
 '''
 import re
 
+from os import path
 from injector import inject, Module, ClassProvider, singleton
 from sqlalchemy.sql.schema import Table, Column, ForeignKey,\
     ForeignKeyConstraint, UniqueConstraint
@@ -23,7 +24,8 @@ from alexandriabase.domain import Tree, NoSuchNodeException
 from alexplugins import _
 from alexplugins.systematic import ROMAN_NUMERALS, SYSTEMATIC_DAO_KEY,\
     DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY, SYSTEMATIC_SERVICE_KEY,\
-    SYSTEMATIC_PDF_GENERATION_SERVICE_KEY
+    SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,\
+    SYSTEMATIC_HTML_GENERATION_SERVICE_KEY
 
 SYSTEMATIC_TABLE = Table(
     'systematik', ALEXANDRIA_METADATA,
@@ -817,6 +819,119 @@ class SystematicPdfGenerationService(object):
         story.append(paragraph)
         return story
 
+class SystematicHtmlGenerationService(object):
+    '''
+    Service to create a pdf file from the systematic database
+    entries
+    '''
+    # pylint: disable=no-self-use
+
+    html_header = """
+<html>
+  <head>
+    <link rel=stylesheet type="text/css" href="../css/listen.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+"""
+
+    @inject
+    def __init__(self, systematic_dao: SYSTEMATIC_DAO_KEY):
+        '''
+        Constructor
+        '''
+        self.systematic_dao = systematic_dao
+    
+    def generate_systematic_html(self, dirname):
+        '''
+        The public method to create a pdf file.
+        
+        Might throw an exception if the file can't be written.
+        '''
+        
+        tree = self.systematic_dao.get_tree()
+
+        self.write_html(tree, dirname);
+        
+    def write_html(self, tree, dirname):
+        
+        file = open(path.join(dirname, 'systindex.html'), "w")
+        file.write(self.html_header)
+        file.write('<h1>Systematik des Archivs Soziale Bewegungen</h1>')
+        for child in tree.root_node.children:
+            entity = child.entity
+            file.write('<p><a href="syst%s.html">%s</a></p>\n' % (entity.id.node_id, 
+                                                                  entity.description))
+            self.write_systpoint_file(dirname, child)
+        file.write("</body>\n")
+        file.close()
+        
+    def write_systpoint_file(self, dirname, child):
+        
+        
+        html_file = open(path.join(dirname, 'syst%s.html' % child.entity.id.node_id), "w")
+        html_file.write(self.html_header)
+        
+        self.write_navigation(html_file, child)
+        
+        self.write_level(html_file, child, 1)
+        
+        html_file.write("</body>\n")
+        html_file.close()
+    
+    def write_navigation(self, html_file, child):
+
+        
+        html_file.write('<div style="position:absolute; top:12px; left:40px"><p>')
+        
+        if (int(child.entity.id.node_id) > 0):
+            html_file.write('<a href="syst%s.html"><img src="../icons/previous.png"/></a>' % 
+                            child.entity.id.node_id)
+        
+        html_file.write('<a href="systindex.html"><img src="../icons/up.png"/></a>')
+        
+        next_identifier = child.entity.id.get_next_sibling_identifier()
+        try:
+            self.systematic_dao.get_by_id(next_identifier)
+            html_file.write('<a href="syst%s.html"><img src="../icons/next.png"/></a>' % 
+                            next_identifier.node_id)
+        except NoSuchNodeException:
+            pass
+
+        html_file.write('</p></div>')
+        
+    def write_level(self, file, node, level):
+        
+        file.write("<h%d>%s</h%d>\n" % (level, node.entity, level));
+        for child in node.children:
+            entity = child.entity
+            if (entity.id.roman > 0 or entity.id.subfolder > 0):
+                self.write_table(file, node.children)
+                return
+            self.write_level(file, child, level + 1)
+            
+    def write_table(self, file, nodes):
+        
+        file.write('\n<table>\n')
+        if nodes[0].entity.id.subfolder > 0:
+            self.write_sub_rows(file, nodes)
+        else:
+            self.write_roman_rows(file, nodes)
+        file.write('</table>\n')
+        
+    def write_sub_rows(self, file, nodes):
+        for node in nodes:
+            file.write("<tr><td>&nbsp;–&nbsp;</td><td>%s</td></tr>\n" % node.entity.description)
+            
+    def write_roman_rows(self, file, nodes):
+        for node in nodes:
+            file.write("<tr><td>%s</td><td>%s</td></tr>\n" % (ROMAN_NUMERALS[node.entity.id.roman],
+                                                       node.entity.description))
+            if len(node.children) > 0:
+                file.write('<tr><td colspan="2">')
+                self.write_table(file, node.children)
+                file.write('</td></tr>\n')
+            
         
 class SystematicBasePluginModule(Module):
     '''
@@ -832,6 +947,8 @@ class SystematicBasePluginModule(Module):
                     ClassProvider(SystematicService), scope=singleton)
         binder.bind(SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,
                     ClassProvider(SystematicPdfGenerationService), scope=singleton)
+        binder.bind(SYSTEMATIC_HTML_GENERATION_SERVICE_KEY,
+                    ClassProvider(SystematicHtmlGenerationService), scope=singleton)
 
         binder.bind(baseinjectorkeys.DOCUMENT_FILTER_EXPRESSION_BUILDER_KEY,
                     ClassProvider(SystematicDocumentFilterExpressionBuilder),
