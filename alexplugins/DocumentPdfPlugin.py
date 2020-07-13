@@ -4,7 +4,7 @@ Created on 29.04.2016
 @author: michael
 '''
 from tkgui import guiinjectorkeys
-from injector import inject, Module, ClassProvider, singleton, Key
+from injector import inject, Module, ClassProvider, singleton, BoundKey
 from alexplugins import _
 from alexpresenters.MessageBroker import ERROR_MESSAGE, Message
 from alexandriabase.services import DocumentFileNotFound
@@ -12,7 +12,7 @@ from tempfile import NamedTemporaryFile
 from alexandriabase import baseinjectorkeys
 from tkgui.PluginManager import DocumentMenuAddition
 
-DOCUMENT_PDF_PLUGIN_PRESENTER_KEY = Key('document_pdf_plugin_presenter')
+DOCUMENT_PDF_PLUGIN_PRESENTER_KEY = BoundKey('document_pdf_plugin_presenter')
 
 class DocumentPdfMenuAdditionPresenter(object):
     '''

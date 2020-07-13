@@ -12,7 +12,7 @@ import sys
 import shutil
 from markdown import Markdown
 from subprocess import call
-from injector import Key, Module, ClassProvider, singleton, inject, provider
+from injector import BoundKey, Module, ClassProvider, singleton, inject, provider
 from alexandriabase.domain import expand_id, AlexDate,\
     DocumentEventReferenceFilter
 from alexandriabase import baseinjectorkeys
@@ -25,22 +25,22 @@ from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from shutil import copyfile
 import logging
 
-CD_EXPORT_CONFIG_KEY = Key("cd_exporter_copnfig")
+CD_EXPORT_CONFIG_KEY = BoundKey("cd_exporter_copnfig")
 
-MESSENGER_KEY = Key("messenger")
+MESSENGER_KEY = BoundKey("messenger")
 
-EVENT_SORT_RUNNER_KEY = Key("event_sort_runner")
-DOCUMENT_SORT_RUNNER_KEY = Key("document_sort_runner")
+EVENT_SORT_RUNNER_KEY = BoundKey("event_sort_runner")
+DOCUMENT_SORT_RUNNER_KEY = BoundKey("document_sort_runner")
 
-THUMBNAIL_RUNNER_KEY = Key("thumbnail_runner")
-PDF_RUNNER_KEY = Key("pdf_runner")
-DISPLAY_FILE_RUNNER_KEY = Key("display_file_runner")
+THUMBNAIL_RUNNER_KEY = BoundKey("thumbnail_runner")
+PDF_RUNNER_KEY = BoundKey("pdf_runner")
+DISPLAY_FILE_RUNNER_KEY = BoundKey("display_file_runner")
 
-GENERATOR_ENGINE_KEY = Key("generator_engine")
-RUNNERS_KEY = Key("runners")
+GENERATOR_ENGINE_KEY = BoundKey("generator_engine")
+RUNNERS_KEY = BoundKey("runners")
 
-EXPORT_DATA_ASSEMBLER_KEY = Key('JSON_exporter')
-TEXT_GENERATOR_KEY = Key('text_generator')
+EXPORT_DATA_ASSEMBLER_KEY = BoundKey('JSON_exporter')
+TEXT_GENERATOR_KEY = BoundKey('text_generator')
 
 def get_zip_file():
     '''

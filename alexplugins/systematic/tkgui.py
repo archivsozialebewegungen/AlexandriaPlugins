@@ -3,7 +3,7 @@ Created on 05.11.2016
 
 @author: michael
 '''
-from injector import inject, Key, ClassProvider, singleton, InstanceProvider
+from injector import inject, BoundKey, ClassProvider, singleton, InstanceProvider
 from tkgui import guiinjectorkeys
 from alexpresenters.MessageBroker import CONF_DOCUMENT_CHANGED, Message,\
     ERROR_MESSAGE, REQ_SAVE_CURRENT_DOCUMENT
@@ -22,13 +22,13 @@ from tkgui.Dialogs import GenericTreeSelectionDialog, BasicDocumentFilterDialog
 from alexpresenters.DialogPresenters import GenericTreeSelectionPresenter
 from tkinter import filedialog
 
-SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY = Key('systematic_point_selection_presenter')
-SYSTEMATIC_POINT_SELECTION_DIALOG_KEY = Key('systematic_point_selection_dialog')
+SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY = BoundKey('systematic_point_selection_presenter')
+SYSTEMATIC_POINT_SELECTION_DIALOG_KEY = BoundKey('systematic_point_selection_dialog')
 
-SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY = Key('systematic_plugin_presenter')
+SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY = BoundKey('systematic_plugin_presenter')
 
-DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY = Key('document_systematic_references_presenter')
-DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY = Key('document_systematic_references_view_class')
+DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY = BoundKey('document_systematic_references_presenter')
+DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY = BoundKey('document_systematic_references_view_class')
 
 SYSTEMATIC_CHANGED = "systematic changed"
 

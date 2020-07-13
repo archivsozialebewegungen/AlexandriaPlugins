@@ -5,7 +5,7 @@ Created on 10.11.2016
 '''
 from tkinter.constants import LEFT
 
-from injector import Key, ClassProvider, singleton, inject
+from injector import BoundKey, ClassProvider, singleton, inject
 from tkgui.AlexWidgets import AlexLabel, AlexEntry, AlexDateEntry,\
     AlexText, AlexButton, AlexRadioGroup
 from tkgui import guiinjectorkeys
@@ -24,15 +24,15 @@ from alexpresenters.DialogPresenters import AbstractInputDialogPresenter
 from tkgui.Dialogs import AbstractInputDialog, Wizard
 from alexandriabase import baseinjectorkeys
 
-CHRONO_DIALOG_KEY = Key('chrono_dialog')
-CHRONO_DIALOG_PRESENTER_KEY = Key('chrono_dialog_presenter')
+CHRONO_DIALOG_KEY = BoundKey('chrono_dialog')
+CHRONO_DIALOG_PRESENTER_KEY = BoundKey('chrono_dialog_presenter')
 
-CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY = Key('cd_exporter_plugin_chrono_presenter')
+CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY = BoundKey('cd_exporter_plugin_chrono_presenter')
 
-EXPORT_INFO_WIZARD_KEY = Key('export_wizard')
-EXPORT_INFO_WIZARD_PRESENTER = Key('export_info_wizard_presenter')
+EXPORT_INFO_WIZARD_KEY = BoundKey('export_wizard')
+EXPORT_INFO_WIZARD_PRESENTER = BoundKey('export_info_wizard_presenter')
 
-CD_EXPORTER_MENU_ADDITIONS_GENERIC_PRESENTER_KEY = Key('cd_exporter_plugin_generic_presenter')
+CD_EXPORTER_MENU_ADDITIONS_GENERIC_PRESENTER_KEY = BoundKey('cd_exporter_plugin_generic_presenter')
 
 class ChronoInfo(object):
     '''
