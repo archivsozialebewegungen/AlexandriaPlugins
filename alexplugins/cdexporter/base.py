@@ -192,8 +192,11 @@ class CDDataAssembler:
         
         document_map = {}
         event_ids = set()
+        
+        keys = event_references.keys()
         documents = self.document_dao.find(
             DOCUMENT_TABLE.c.hauptnr.in_(event_references.keys()))  # @UndefinedVariable
+        
         for document in documents:
             document.related_events = event_references[document.id]
             document.file_infos = self.document_file_info_dao.get_file_infos_for_document(document.id)
