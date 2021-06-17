@@ -334,7 +334,7 @@ class SystematicMenuAdditions(DocumentMenuAddition):
         if len(self.potential_child_ids) == 0:
             return
         if len(self.potential_child_ids) == 1:
-            self._create_new_entry(self.potential_child_ids[0])
+            self._create_new_entry(0)
         else:
             self.string_selection_dialog.activate(
                 self._create_new_entry,
@@ -345,7 +345,7 @@ class SystematicMenuAdditions(DocumentMenuAddition):
         
         if entry_id is None:
             return
-        self.new_child_id = self.potential_child_ids[0]
+        self.new_child_id = self.potential_child_ids[entry_id]
         self.presenter.create_new_entry_action()
         self.string_edit_dialog.activate(
             self._change_description,
