@@ -5,13 +5,12 @@ Created on 10.10.2016
 '''
 import unittest
 from injector import Injector
-from alex_test_utils import TestEnvironment, MODE_SIMPLE,\
-    load_table_data
+from alex_test_utils import TestEnvironment, MODE_SIMPLE
 from alexandriabase import AlexBaseModule
 from alexandriabase.daos import DaoModule
 from alexplugins.systematic.tkgui import SystematicGuiPluginModule
-from alexplugins.systematic import SYSTEMATIC_DAO_KEY, SYSTEMATIC_SERVICE_KEY,\
-    SYSTEMATIC_PDF_GENERATION_SERVICE_KEY
+from alexplugins.systematic.base import SystematicDao, SystematicService
+from tests.test_pdf_generation_service import TestSystematicPdfGenerationService
 
 class TestDaoModuleConfiguration(unittest.TestCase):
     
@@ -29,9 +28,9 @@ class TestDaoModuleConfiguration(unittest.TestCase):
                         SystematicGuiPluginModule()
                          ])
 
-        injector.get(SYSTEMATIC_DAO_KEY)    
-        injector.get(SYSTEMATIC_SERVICE_KEY)    
-        injector.get(SYSTEMATIC_PDF_GENERATION_SERVICE_KEY)    
+        injector.get(SystematicDao)    
+        injector.get(SystematicService)    
+        injector.get(TestSystematicPdfGenerationService)    
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

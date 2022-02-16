@@ -4,11 +4,10 @@ Created on 13.12.2015
 @author: michael
 '''
 from acceptance.AcceptanceTestUtils import BaseAcceptanceTest, AcceptanceTestRunner
-from alexplugins.cdexporter.tkgui import CHRONO_DIALOG_KEY,\
-    EXPORT_INFO_WIZARD_KEY
+from alexplugins.cdexporter.tkgui import ExportInfoWizard, ChronoDialog
 from alexplugins import _
 from alexplugins.cdexporter.base import CD_EXPORT_CONFIG_KEY
-from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
+from tkgui.WindowManager import WindowManager
 
 class PluginFunctionalityTest(BaseAcceptanceTest):
 
@@ -48,7 +47,7 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
 
     def check_chrono_export(self):
         print("Checking exporting chronology works...", end='')
-        dialog = self.injector.get(CHRONO_DIALOG_KEY)
+        dialog = self.injector.get(ChronoDialog)
         
         self.start_dialog(self.event_window_menubar.get_callback(_('Export'), _('Export chronology')))
         dialog.current_quarter = 3
@@ -59,9 +58,9 @@ class PluginFunctionalityTest(BaseAcceptanceTest):
 
     def check_create_cd_definition(self):
         print("Checking creation of cd defininition...", end="")
-        wizard = self.injector.get(EXPORT_INFO_WIZARD_KEY)
+        wizard = self.injector.get(ExportInfoWizard)
         
-        window_manager = self.injector.get(WINDOW_MANAGER_KEY)
+        window_manager = self.injector.get(WindowManager)
         self.wait()
         window_manager.run_in_thread(self.event_window_menubar.get_callback(_('Export'), _('Create CD definition')))
         #self.start_dialog(self.event_window_menubar.get_callback(_('Export'), _('Create CD definition')))

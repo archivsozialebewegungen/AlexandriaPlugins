@@ -3,34 +3,58 @@ Created on 05.11.2016
 
 @author: michael
 '''
-from injector import inject, BoundKey, ClassProvider, singleton, InstanceProvider
-from tkgui import guiinjectorkeys
+from injector import inject, BoundKey, singleton, InstanceProvider
 from alexpresenters.MessageBroker import CONF_DOCUMENT_CHANGED, Message,\
-    ERROR_MESSAGE, REQ_SAVE_CURRENT_DOCUMENT
+    ERROR_MESSAGE, REQ_SAVE_CURRENT_DOCUMENT, MessageBroker
 from alexandriabase.domain import NoSuchNodeException
 from tkgui.References import ReferencesWidgetFactory, ReferenceView, Action
-from alexplugins.systematic import SYSTEMATIC_SERVICE_KEY,\
-    SYSTEMATIC_PDF_GENERATION_SERVICE_KEY, SYSTEMATIC_HTML_GENERATION_SERVICE_KEY
 from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint,\
-    SystematicBasePluginModule
+    SystematicBasePluginModule, SystematicService,\
+    SystematicPdfGenerationService, SystematicHtmlGenerationService
 from tkgui.AlexWidgets import AlexLabel, AlexButton
 from tkinter.constants import W
 from tkgui.PluginManager import DocumentMenuAddition,\
     DocumentReferenceFactory
-from tkgui.Dialogs import GenericTreeSelectionDialog, BasicDocumentFilterDialog
-from alexpresenters.DialogPresenters import GenericTreeSelectionPresenter
+from tkgui.Dialogs import GenericTreeSelectionDialog, BasicDocumentFilterDialog,\
+    GenericBooleanSelectionDialog, GenericStringEditDialog,\
+    GenericStringSelectionDialog, FileSelectionDialog
+from alexpresenters.DialogPresenters import GenericTreeSelectionPresenter,\
+    DocumentFilterDialogPresenter
 from tkinter import filedialog
+from tkgui.WindowManager import WindowManager
 
-SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY = BoundKey('systematic_point_selection_presenter')
-SYSTEMATIC_POINT_SELECTION_DIALOG_KEY = BoundKey('systematic_point_selection_dialog')
-
-SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY = BoundKey('systematic_plugin_presenter')
-
-DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY = BoundKey('document_systematic_references_presenter')
 DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY = BoundKey('document_systematic_references_view_class')
 
 SYSTEMATIC_CHANGED = "systematic changed"
+
+class SystematicPointSelectionPresenter(GenericTreeSelectionPresenter):
+    
+    @inject
+    def __init__(self,
+                 systematic_service: SystematicService,
+                 message_broker: MessageBroker):
+        super().__init__()
+        self.systematic_service = systematic_service
+        self.message_broker = message_broker
+        self.message_broker.subscribe(self)
+    
+    def set_tree(self):
+        self._view.tree = self.systematic_service.get_systematic_tree()
+        
+    def receive_message(self, message):
+        if message == SYSTEMATIC_CHANGED:
+            self.set_tree()
+
+
+class SystematicPointSelectionDialog(GenericTreeSelectionDialog):
+    
+    @inject
+    def __init__(self,
+                 window_manager: WindowManager,
+                 presenter: SystematicPointSelectionPresenter):
+        super().__init__(window_manager, presenter)
+
 
 class SystematicDocumentFilterDialog(BasicDocumentFilterDialog):
 
@@ -38,9 +62,9 @@ class SystematicDocumentFilterDialog(BasicDocumentFilterDialog):
     
     @inject
     def __init__(self,
-                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
-                 presenter: guiinjectorkeys.DOCUMENT_FILTER_DIALOG_PRESENTER_KEY,
-                 systematic_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY):
+                 window_manager: WindowManager,
+                 presenter: DocumentFilterDialogPresenter,
+                 systematic_dialog: SystematicPointSelectionDialog):
         super().__init__(window_manager, presenter)
         self.systematic_dialog = systematic_dialog
 
@@ -74,8 +98,8 @@ class DocumentSystematicReferencesPresenter:
 
     @inject
     def __init__(self,
-                 message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
-                 systematic_service: SYSTEMATIC_SERVICE_KEY):
+                 message_broker: MessageBroker,
+                 systematic_service: SystematicService):
         self.message_broker = message_broker
         self.message_broker.subscribe(self)
         self.systematic_service = systematic_service
@@ -141,9 +165,9 @@ class DocumentSystematicReferencesWidgetFactory(ReferencesWidgetFactory, Documen
     @inject
     def __init__(self,
                  view_class: DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY,
-                 presenter: DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY,
-                 systematic_point_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY,
-                 deletion_dialog: guiinjectorkeys.GENERIC_BOOLEAN_SELECTION_DIALOG_KEY):
+                 presenter: DocumentSystematicReferencesPresenter,
+                 systematic_point_dialog: SystematicPointSelectionDialog,
+                 deletion_dialog: GenericBooleanSelectionDialog):
         super().__init__(view_class, presenter, systematic_point_dialog, deletion_dialog)
         
 class DocumentSystematicReferenceView(ReferenceView):
@@ -182,24 +206,6 @@ class DocumentSystematicReferenceView(ReferenceView):
         if value:
             self.presenter.delete_selected_systematic_point()
 
-class SystematicPointSelectionPresenter(GenericTreeSelectionPresenter):
-    
-    @inject
-    def __init__(self,
-                 systematic_service: SYSTEMATIC_SERVICE_KEY,
-                 message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY):
-        super().__init__()
-        self.systematic_service = systematic_service
-        self.message_broker = message_broker
-        self.message_broker.subscribe(self)
-    
-    def set_tree(self):
-        self._view.tree = self.systematic_service.get_systematic_tree()
-        
-    def receive_message(self, message):
-        if message == SYSTEMATIC_CHANGED:
-            self.set_tree()
-
 class SystematicMenuAdditionsPresenter(object):
     '''
     classdocs
@@ -207,10 +213,10 @@ class SystematicMenuAdditionsPresenter(object):
 
     @inject
     def __init__(self,
-                 message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
-                 systematic_service: SYSTEMATIC_SERVICE_KEY,
-                 pdf_generation_service: SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,
-                 html_generation_service: SYSTEMATIC_HTML_GENERATION_SERVICE_KEY):
+                 message_broker: MessageBroker,
+                 systematic_service: SystematicService,
+                 pdf_generation_service: SystematicPdfGenerationService,
+                 html_generation_service: SystematicHtmlGenerationService):
         '''
         Constructor
         '''
@@ -279,11 +285,11 @@ class SystematicMenuAdditions(DocumentMenuAddition):
 
     @inject
     def __init__(self,
-                 presenter: SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY,
-                 systematic_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY,
-                 string_edit_dialog: guiinjectorkeys.GENERIC_STRING_EDIT_DIALOG_KEY,
-                 string_selection_dialog: guiinjectorkeys.GENERIC_STRING_SELECTION_DIALOG_KEY,
-                 file_selection_dialog: guiinjectorkeys.FILE_SELECTION_DIALOG_KEY):
+                 presenter: SystematicMenuAdditionsPresenter,
+                 systematic_dialog: SystematicPointSelectionDialog,
+                 string_edit_dialog: GenericStringEditDialog,
+                 string_selection_dialog: GenericStringSelectionDialog,
+                 file_selection_dialog: FileSelectionDialog):
         '''
         Constructor
         '''
@@ -394,14 +400,6 @@ class SystematicMenuAdditions(DocumentMenuAddition):
     pdf_file = property(get_pdf_file)
     html_dir = property(get_html_dir)
 
-class SystematicPointSelectionDialog(GenericTreeSelectionDialog):
-    
-    @inject
-    def __init__(self,
-                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
-                 presenter: SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY):
-        super().__init__(window_manager, presenter)
-
 class SystematicGuiPluginModule(SystematicBasePluginModule):
     '''
     Injector module to bind the plugin keys
@@ -410,18 +408,5 @@ class SystematicGuiPluginModule(SystematicBasePluginModule):
         
         super().configure(binder)
 
-        binder.bind(SYSTEMATIC_POINT_SELECTION_DIALOG_KEY,
-                    ClassProvider(SystematicPointSelectionDialog), scope=singleton)
-        binder.bind(SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY,
-                    ClassProvider(SystematicPointSelectionPresenter), scope=singleton)
-                            
-        binder.bind(DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY,
-                    ClassProvider(DocumentSystematicReferencesPresenter), scope=singleton)
         binder.bind(DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY,
                     InstanceProvider(DocumentSystematicReferenceView), scope=singleton)
-
-        binder.bind(SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY,
-                    ClassProvider(SystematicMenuAdditionsPresenter), scope=singleton)
-        binder.bind(guiinjectorkeys.DOCUMENT_FILTER_DIALOG_KEY,
-                    ClassProvider(SystematicDocumentFilterDialog), scope=singleton)
-

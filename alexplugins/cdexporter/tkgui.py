@@ -5,34 +5,22 @@ Created on 10.11.2016
 '''
 from tkinter.constants import LEFT
 
-from injector import BoundKey, ClassProvider, singleton, inject
+from injector import inject
 from tkgui.AlexWidgets import AlexLabel, AlexEntry, AlexDateEntry,\
     AlexText, AlexButton, AlexRadioGroup
-from tkgui import guiinjectorkeys
 from alexandriabase.domain import AlexDate
 from alexplugins import _
-from alexplugins.cdexporter.base import GENERATOR_ENGINE_KEY, \
-    ExportInfo, CDExporterBasePluginModule, MESSENGER_KEY,\
-    TEXT_GENERATOR_KEY, load_export_info
+from alexplugins.cdexporter.base import ExportInfo,\
+    load_export_info, ChronoTextGenerator, GenerationEngine,\
+    CDExporterBasePluginModule
 from tkgui.PluginManager import EventMenuAddition
 from tkinter import Label
-from alexplugins.systematic.tkgui import SYSTEMATIC_POINT_SELECTION_DIALOG_KEY
+from alexplugins.systematic.tkgui import SystematicPointSelectionDialog
 from tkinter.filedialog import asksaveasfilename, askopenfilename
-import datetime
-from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
 from alexpresenters.DialogPresenters import AbstractInputDialogPresenter
 from tkgui.Dialogs import AbstractInputDialog, Wizard
-from alexandriabase import baseinjectorkeys
-
-CHRONO_DIALOG_KEY = BoundKey('chrono_dialog')
-CHRONO_DIALOG_PRESENTER_KEY = BoundKey('chrono_dialog_presenter')
-
-CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY = BoundKey('cd_exporter_plugin_chrono_presenter')
-
-EXPORT_INFO_WIZARD_KEY = BoundKey('export_wizard')
-EXPORT_INFO_WIZARD_PRESENTER = BoundKey('export_info_wizard_presenter')
-
-CD_EXPORTER_MENU_ADDITIONS_GENERIC_PRESENTER_KEY = BoundKey('cd_exporter_plugin_generic_presenter')
+from tkgui.MainWindows import WindowManager
+from alexpresenters.MessageBroker import MessageBroker
 
 class ChronoInfo(object):
     '''
@@ -55,7 +43,7 @@ class MessageBarMessenger():
     '''
     
     @inject
-    def __init__(self, message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY):
+    def __init__(self, message_broker: MessageBroker):
         
         self.message_broker = message_broker
         
@@ -87,8 +75,8 @@ class ChronoDialog(AbstractInputDialog):
 
     @inject
     def __init__(self,
-                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
-                 presenter: CHRONO_DIALOG_PRESENTER_KEY):
+                 window_manager: WindowManager,
+                 presenter: ChronoDialogPresenter):
         self.quarters = ("%s 1" % _('Quarter'),
                          "%s 2" % _('Quarter'),
                          "%s 3" % _('Quarter'),
@@ -147,9 +135,9 @@ class ExportInfoWizard(Wizard):
     
     @inject
     def __init__(self,
-                 window_manager: guiinjectorkeys.WINDOW_MANAGER_KEY,
-                 presenter: EXPORT_INFO_WIZARD_PRESENTER,
-                 signature_dialog: SYSTEMATIC_POINT_SELECTION_DIALOG_KEY):
+                 window_manager: WindowManager,
+                 presenter: ExportInfoWizardPresenter,
+                 signature_dialog: SystematicPointSelectionDialog):
         
         super().__init__(window_manager, presenter, number_of_pages=6, geometry="500x200")
         
@@ -285,32 +273,6 @@ class ExportInfoWizard(Wizard):
     start_image = property(_get_start_image, _set_start_image)
     export_info = property(_get_export_info, _set_export_info)
 
-class ChronoTextGenerator:
-    
-    def run(self, export_info):
-        
-        pagecontent = {}
-        pagecontent['startpage'] = """
-Auszug aus der Alexandria Datenbank
-===================================
-
-Stand der Datenbank: %s
------------------------
-
-Dieser Datenträger enthält die Dokumente, die für 
-den Zeitraum zwischen dem %s und dem %s relevant sind.
-""" % (datetime.date.today().strftime('%d. %B %Y.'),
-       export_info.start_date,
-       export_info.end_date)
-
-        pagecontent['imprint'] = """
-Impressum
-=========
-
-Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden
-"""
-        return pagecontent
-        
 
 class CDExporterMenuAdditionsPresenter(object):
     '''
@@ -323,10 +285,10 @@ class CDExporterMenuAdditionsPresenter(object):
     
     @inject
     def __init__(self,
-                 message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
-                 generation_engine: GENERATOR_ENGINE_KEY,
-                 text_generator: TEXT_GENERATOR_KEY,
-                 window_manager: WINDOW_MANAGER_KEY):
+                 message_broker: MessageBroker,
+                 generation_engine: GenerationEngine,
+                 text_generator: ChronoTextGenerator,
+                 window_manager: WindowManager):
         self.view = None
         self.message_broker = message_broker
         self.generation_engine = generation_engine
@@ -416,9 +378,9 @@ class CDExporterMenuAdditions(EventMenuAddition):
 
     @inject
     def __init__(self,
-                 presenter: CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY,
-                 chrono_dialog: CHRONO_DIALOG_KEY,
-                 export_info_dialog: EXPORT_INFO_WIZARD_KEY):
+                 presenter: CDExporterMenuAdditionsPresenter,
+                 chrono_dialog: ChronoDialog,
+                 export_info_dialog: ExportInfoWizard):
 
         self.presenter = presenter
         self.presenter.view = self
@@ -507,26 +469,6 @@ class CDExporterMenuAdditions(EventMenuAddition):
     
 class CDExporterGuiPluginModule(CDExporterBasePluginModule):
     '''
-    The injector module class for dependency injection.
+    Necessary for plugin mechanism
     '''
-    
-    def configure(self, binder):
-      
-        super().configure(binder)
-        
-        binder.bind(MESSENGER_KEY,
-                    ClassProvider(MessageBarMessenger), scope=singleton)
-
-        binder.bind(CHRONO_DIALOG_PRESENTER_KEY,
-                    ClassProvider(ChronoDialogPresenter), scope=singleton)
-        binder.bind(CHRONO_DIALOG_KEY,
-                    ClassProvider(ChronoDialog), scope=singleton)
-        binder.bind(CD_EXPORTER_MENU_ADDITIONS_PRESENTER_KEY,
-                    ClassProvider(CDExporterMenuAdditionsPresenter), scope=singleton)
-        binder.bind(TEXT_GENERATOR_KEY, ClassProvider(ChronoTextGenerator), scope=singleton)
-
-        binder.bind(EXPORT_INFO_WIZARD_KEY,
-                    ClassProvider(ExportInfoWizard), scope=singleton)
-        binder.bind(EXPORT_INFO_WIZARD_PRESENTER,
-                    ClassProvider(ExportInfoWizardPresenter), scope=singleton)
-               
+    pass
