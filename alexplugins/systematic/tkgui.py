@@ -22,7 +22,7 @@ from tkgui.Dialogs import GenericTreeSelectionDialog, BasicDocumentFilterDialog,
 from alexpresenters.DialogPresenters import GenericTreeSelectionPresenter,\
     DocumentFilterDialogPresenter
 from tkinter import filedialog
-from tkgui.WindowManager import WindowManager
+from tkgui.MainWindows import WindowManager
 
 DOCUMENT_SYSTEMATIC_REFERENCES_VIEW_CLASS_KEY = BoundKey('document_systematic_references_view_class')
 

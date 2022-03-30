@@ -19,8 +19,8 @@ from alexplugins.systematic.tkgui import SystematicPointSelectionDialog
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from alexpresenters.DialogPresenters import AbstractInputDialogPresenter
 from tkgui.Dialogs import AbstractInputDialog, Wizard
-from tkgui.MainWindows import WindowManager
 from alexpresenters.MessageBroker import MessageBroker
+from tkgui.MainWindows import WindowManager
 
 class ChronoInfo(object):
     '''
