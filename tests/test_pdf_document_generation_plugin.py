@@ -6,20 +6,21 @@ Created on 26.05.2016
 import os
 from integration.baseintegrationtest import BaseIntegrationTest
 from unittest.mock import MagicMock
+from alexandriabase import baseinjectorkeys
 from genericpath import isfile
 from alexpresenters.Module import PresentersModule
 from alex_test_utils import TestEnvironment, MODE_FULL
-from alexandriabase.services import DocumentService
-from alexplugins.DocumentPdfPlugin import DocumentPdfMenuAdditionPresenter
+from alexplugins.DocumentPdfPlugin import DocumentPdfPluginModule,\
+    DOCUMENT_PDF_PLUGIN_PRESENTER_KEY
 
 class DocumentPdfGenerationTest(BaseIntegrationTest):
 
 
     def setUp(self):
         super().setUp()
-        self.injector = self.get_injector(PresentersModule())
-        self.presenter = self.injector.get(DocumentPdfMenuAdditionPresenter)
-        self.document_service = self.injector.get(DocumentService)
+        self.injector = self.get_injector(PresentersModule(), DocumentPdfPluginModule())
+        self.presenter = self.injector.get(DOCUMENT_PDF_PLUGIN_PRESENTER_KEY)
+        self.document_service = self.injector.get(baseinjectorkeys.DOCUMENT_SERVICE_KEY)
         self.view = MagicMock()
         self.presenter.view = self.view;
 

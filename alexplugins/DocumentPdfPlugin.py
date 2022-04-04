@@ -4,14 +4,16 @@ Created on 29.04.2016
 @author: michael
 '''
 from tkgui import guiinjectorkeys
-from injector import inject, singleton
+from injector import inject, Module, ClassProvider, singleton, BoundKey
 from alexplugins import _
-from alexpresenters.MessageBroker import ERROR_MESSAGE, Message, MessageBroker
-from alexandriabase.services import DocumentFileNotFound, FileProvider
+from alexpresenters.MessageBroker import ERROR_MESSAGE, Message
+from alexandriabase.services import DocumentFileNotFound
 from tempfile import NamedTemporaryFile
+from alexandriabase import baseinjectorkeys
 from tkgui.PluginManager import DocumentMenuAddition
 
-@singleton
+DOCUMENT_PDF_PLUGIN_PRESENTER_KEY = BoundKey('document_pdf_plugin_presenter')
+
 class DocumentPdfMenuAdditionPresenter(object):
     '''
     classdocs
@@ -19,8 +21,8 @@ class DocumentPdfMenuAdditionPresenter(object):
 
     @inject
     def __init__(self,
-                 message_broker: MessageBroker,
-                 file_provider: FileProvider):
+                 message_broker: guiinjectorkeys.MESSAGE_BROKER_KEY,
+                 file_provider: baseinjectorkeys.DOCUMENT_FILE_PROVIDER):
         '''
         Constructor
         '''
@@ -50,7 +52,7 @@ class DocumentPdfMenuAddition(DocumentMenuAddition):
 
     @inject
     def __init__(self,
-                 presenter: DocumentPdfMenuAdditionPresenter,
+                 presenter: DOCUMENT_PDF_PLUGIN_PRESENTER_KEY,
                  file_viewers: guiinjectorkeys.DOCUMENT_FILE_VIEWERS_KEY):
         '''
         Constructor
@@ -83,3 +85,14 @@ class DocumentPdfMenuAddition(DocumentMenuAddition):
         
     current_document = property(get_current_document)
     pdf_file = property(None, show_pdf)
+
+class DocumentPdfPluginModule(Module):
+    '''
+    Rather complicated injector module that constructs the main
+    windows of the application with dialogs and reference widgets.
+    '''
+    
+    def configure(self, binder):
+      
+        binder.bind(DOCUMENT_PDF_PLUGIN_PRESENTER_KEY,
+                    ClassProvider(DocumentPdfMenuAdditionPresenter), scope=singleton)

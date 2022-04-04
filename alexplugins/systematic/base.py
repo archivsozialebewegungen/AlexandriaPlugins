@@ -19,11 +19,13 @@ from reportlab.platypus.paragraph import Paragraph
 from alexandriabase import baseinjectorkeys
 from alexandriabase.base_exceptions import DataError
 from alexandriabase.daos import GenericDao, ALEXANDRIA_METADATA,\
-    DocumentFilterExpressionBuilder, DOCUMENT_TABLE, DocumentDao
+    DocumentFilterExpressionBuilder, DOCUMENT_TABLE
 from alexandriabase.domain import Tree, NoSuchNodeException
 from alexplugins import _
-from alexplugins.systematic import ROMAN_NUMERALS
-from sqlalchemy.engine.base import Engine
+from alexplugins.systematic import ROMAN_NUMERALS, SYSTEMATIC_DAO_KEY,\
+    DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY, SYSTEMATIC_SERVICE_KEY,\
+    SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,\
+    SYSTEMATIC_HTML_GENERATION_SERVICE_KEY
 
 SYSTEMATIC_TABLE = Table(
     'systematik', ALEXANDRIA_METADATA,
@@ -89,7 +91,7 @@ class SystematicIdentifier:
     def _get_parent_identifier(self):
         '''
         Determines the node identifier of the parent node.
-        Returns None, if this is called on the root
+        Throws an exception if this is called on the root
         node.
         '''
         if self.subfolder:
@@ -294,7 +296,6 @@ class SystematicPoint:
 
     parent_id = property(lambda self: self.id.parent_id)
 
-@singleton
 class SystematicDocumentFilterExpressionBuilder(DocumentFilterExpressionBuilder):
     '''
     Changes the building of the signature expression appropriate
@@ -317,14 +318,13 @@ class SystematicDocumentFilterExpressionBuilder(DocumentFilterExpressionBuilder)
 
 
 
-@singleton
 class SystematicDao(GenericDao):
     '''
     Dao for the systematic tree.
     '''
 
     @inject
-    def __init__(self, db_engine: Engine):
+    def __init__(self, db_engine: baseinjectorkeys.DB_ENGINE_KEY):
         super().__init__(db_engine)
         self.cache = None
         self.table = SYSTEMATIC_TABLE
@@ -429,14 +429,14 @@ class SystematicDao(GenericDao):
                     self.table.c.roemisch == identifier.roman,
                     self.table.c.sub == identifier.subfolder)
 
-@singleton
+
 class DocumentSystematicRelationsDao(GenericDao):
     '''
     Handles the document to systematic relations
     '''
     
     @inject
-    def __init__(self, db_engine: Engine):
+    def __init__(self, db_engine: baseinjectorkeys.DB_ENGINE_KEY):
         super().__init__(db_engine)
         self.dsref_table = DOCUMENT_SYSTEMATIC_REFERENCE_TABLE
         self.doc_table = DOCUMENT_TABLE
@@ -556,7 +556,6 @@ class QualifiedSystematicPoint(SystematicPoint):
         else:
             return super().__str__()        
 
-@singleton
 class SystematicService:
     '''
     Service to handle the archive systematic, i.e. a tree of categories,
@@ -572,9 +571,9 @@ class SystematicService:
     # pylint: disable=invalid-name
     @inject
     def __init__(self,
-                 systematic_dao: SystematicDao,
-                 document_dao: DocumentDao,
-                references_dao: DocumentSystematicRelationsDao):
+                 systematic_dao: SYSTEMATIC_DAO_KEY,
+                 document_dao: baseinjectorkeys.DOCUMENT_DAO_KEY,
+                references_dao: DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY):
         self.systematic_dao = systematic_dao
         self.document_dao = document_dao
         self.references_dao = references_dao
@@ -735,7 +734,6 @@ class SystematicService:
         '''
         self.systematic_dao.delete(systematic_node.id)
 
-@singleton
 class SystematicPdfGenerationService(object):
     '''
     Service to create a pdf file from the systematic database
@@ -744,7 +742,7 @@ class SystematicPdfGenerationService(object):
     # pylint: disable=no-self-use
 
     @inject
-    def __init__(self, systematic_dao: SystematicDao):
+    def __init__(self, systematic_dao: SYSTEMATIC_DAO_KEY):
         '''
         Constructor
         '''
@@ -824,7 +822,6 @@ class SystematicPdfGenerationService(object):
         story.append(paragraph)
         return story
 
-@singleton
 class SystematicHtmlGenerationService(object):
     '''
     Service to create a pdf file from the systematic database
@@ -842,7 +839,7 @@ class SystematicHtmlGenerationService(object):
 """
 
     @inject
-    def __init__(self, systematic_dao: SystematicDao):
+    def __init__(self, systematic_dao: SYSTEMATIC_DAO_KEY):
         '''
         Constructor
         '''
@@ -944,6 +941,17 @@ class SystematicBasePluginModule(Module):
     Injector module to bind the plugin keys
     '''
     def configure(self, binder):
+        binder.bind(SYSTEMATIC_DAO_KEY,
+                    ClassProvider(SystematicDao), scope=singleton)
+        binder.bind(DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY,
+                    ClassProvider(DocumentSystematicRelationsDao), scope=singleton)
+
+        binder.bind(SYSTEMATIC_SERVICE_KEY,
+                    ClassProvider(SystematicService), scope=singleton)
+        binder.bind(SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,
+                    ClassProvider(SystematicPdfGenerationService), scope=singleton)
+        binder.bind(SYSTEMATIC_HTML_GENERATION_SERVICE_KEY,
+                    ClassProvider(SystematicHtmlGenerationService), scope=singleton)
 
         binder.bind(baseinjectorkeys.DOCUMENT_FILTER_EXPRESSION_BUILDER_KEY,
                     ClassProvider(SystematicDocumentFilterExpressionBuilder),

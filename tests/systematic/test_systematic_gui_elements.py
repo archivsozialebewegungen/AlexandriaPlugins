@@ -12,16 +12,16 @@ import tempfile
 import pytest
 from alexpresenters.MessageBroker import ERROR_MESSAGE, Message,\
     CONF_DOCUMENT_CHANGED
+from alexandriabase import baseinjectorkeys
 from alexplugins import _
-from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier,\
-    SystematicService, SystematicDao
+from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from alexplugins.systematic.tkgui import SystematicGuiPluginModule,\
-    SystematicPointSelectionDialog, DocumentSystematicReferenceView,\
-    SystematicMenuAdditionsPresenter, DocumentSystematicReferencesPresenter,\
-    SystematicPointSelectionPresenter
+    SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY, SystematicPointSelectionDialog,\
+    DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY,\
+    DocumentSystematicReferenceView, SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY
+from alexplugins.systematic import SYSTEMATIC_SERVICE_KEY, SYSTEMATIC_DAO_KEY
 from alexpresenters.Module import PresentersModule
 from alex_test_utils import load_table_data
-from alexandriabase.daos import DocumentDao
 
 class SystematicServiceStub:
             
@@ -57,7 +57,7 @@ class SystematicPointSelectionDialogPresenterTest(BaseIntegrationTest):
         super().setUp()
         injector = self.get_injector(PresentersModule(), SystematicGuiPluginModule())
         load_table_data(['systematik', 'sverweis'], self.engine)
-        self.presenter = injector.get(SystematicPointSelectionPresenter)
+        self.presenter = injector.get(SYSTEMATIC_POINT_SELECTION_PRESENTER_KEY)
         self.view = MagicMock(spec=SystematicPointSelectionDialog)
         self.presenter.view = self.view
 
@@ -81,8 +81,8 @@ class TestSystematicPlugin(BaseIntegrationTest):
         self.injector = self.get_injector(PresentersModule(), SystematicGuiPluginModule())
         load_table_data(['systematik', 'sverweis'], self.engine)
 
-        self.presenter = self.injector.get(SystematicMenuAdditionsPresenter)
-        self.service = self.injector.get(SystematicService)
+        self.presenter = self.injector.get(SYSTEMATIC_MENU_ADDITIONS_PRESENTER_KEY)
+        self.service = self.injector.get(SYSTEMATIC_SERVICE_KEY)
         self.view = MagicMock()
         self.presenter.view = self.view;
         self.tree = self.service.get_systematic_tree()
@@ -174,10 +174,10 @@ class DocumentSystematicReferencesPresenterTest(BaseIntegrationTest):
         super().setUp()
         self.injector = self.get_injector(PresentersModule(), SystematicGuiPluginModule())
         load_table_data(['systematik', 'sverweis'], self.engine)
-        self.systematic_service = self.injector.get(SystematicService)
-        self.document_dao = self.injector.get(DocumentDao)
-        self.systematic_dao = self.injector.get(SystematicDao)
-        self.presenter = self.injector.get(DocumentSystematicReferencesPresenter)
+        self.systematic_service = self.injector.get(SYSTEMATIC_SERVICE_KEY)
+        self.document_dao = self.injector.get(baseinjectorkeys.DOCUMENT_DAO_KEY)
+        self.systematic_dao = self.injector.get(SYSTEMATIC_DAO_KEY)
+        self.presenter = self.injector.get(DOCUMENT_SYSTEMATIC_REFERENCES_PRESENTER_KEY)
         self.view = MagicMock(spec=DocumentSystematicReferenceView)
         self.presenter.view = self.view
         

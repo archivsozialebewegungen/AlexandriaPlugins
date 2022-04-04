@@ -12,21 +12,35 @@ import sys
 import shutil
 from markdown import Markdown
 from subprocess import call
-from injector import BoundKey, Module, singleton, inject, provider
+from injector import BoundKey, Module, ClassProvider, singleton, inject, provider
 from alexandriabase.domain import expand_id, AlexDate,\
     DocumentEventReferenceFilter
-from alexandriabase.services import DocumentFileNotFound, DocumentService
-from alexandriabase.daos import DOCUMENT_TABLE, EVENT_TABLE, EventDao,\
-    DocumentDao, DocumentFileInfoDao, DocumentEventRelationsDao,\
-    EventCrossreferencesDao
-from alexandriabase.config import NoSuchConfigValue, Config
+from alexandriabase import baseinjectorkeys
+from alexandriabase.services import DocumentFileNotFound
+from alexandriabase.daos import DOCUMENT_TABLE, EVENT_TABLE
+from alexandriabase.baseinjectorkeys import CONFIG_KEY
+from alexandriabase.config import NoSuchConfigValue
 from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from shutil import copyfile
 import logging
 
-CD_EXPORT_CONFIG_KEY = BoundKey("cd_exporter_config")
+CD_EXPORT_CONFIG_KEY = BoundKey("cd_exporter_copnfig")
+
+MESSENGER_KEY = BoundKey("messenger")
+
+EVENT_SORT_RUNNER_KEY = BoundKey("event_sort_runner")
+DOCUMENT_SORT_RUNNER_KEY = BoundKey("document_sort_runner")
+
+THUMBNAIL_RUNNER_KEY = BoundKey("thumbnail_runner")
+PDF_RUNNER_KEY = BoundKey("pdf_runner")
+DISPLAY_FILE_RUNNER_KEY = BoundKey("display_file_runner")
+
+GENERATOR_ENGINE_KEY = BoundKey("generator_engine")
 RUNNERS_KEY = BoundKey("runners")
+
+EXPORT_DATA_ASSEMBLER_KEY = BoundKey('JSON_exporter')
+TEXT_GENERATOR_KEY = BoundKey('text_generator')
 
 def get_zip_file():
     '''
@@ -37,32 +51,6 @@ def get_zip_file():
     module_dir = os.path.dirname(module_path)
     return os.path.join(os.path.join(module_dir, "files"), 'app.zip')
 
-class ChronoTextGenerator:
-    
-    def run(self, export_info):
-        
-        pagecontent = {}
-        pagecontent['startpage'] = """
-Auszug aus der Alexandria Datenbank
-===================================
-
-Stand der Datenbank: %s
------------------------
-
-Dieser Datenträger enthält die Dokumente, die für 
-den Zeitraum zwischen dem %s und dem %s relevant sind.
-""" % (datetime.date.today().strftime('%d. %B %Y.'),
-       export_info.start_date,
-       export_info.end_date)
-
-        pagecontent['imprint'] = """
-Impressum
-=========
-
-Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden
-"""
-        return pagecontent
-        
 class ExportInfo:
     '''
     Simple data class for CD configuration.
@@ -172,17 +160,16 @@ class AlexEncoder(JSONEncoder):
             return super().default(o)
         return object_dict
 
-@singleton
 class CDDataAssembler:
     
     @inject
     def __init__(self,
-                 messenger: ConsoleMessenger,
-                 document_dao: DocumentDao,
-                 event_dao: EventDao,
-                 document_file_info_dao: DocumentFileInfoDao,
-                 references_dao: DocumentEventRelationsDao,
-                 event_cross_references_dao: EventCrossreferencesDao):
+                 messenger: MESSENGER_KEY,
+                 document_dao: baseinjectorkeys.DOCUMENT_DAO_KEY,
+                 event_dao: baseinjectorkeys.EVENT_DAO_KEY,
+                 document_file_info_dao: baseinjectorkeys.DOCUMENT_FILE_INFO_DAO_KEY,
+                 references_dao: baseinjectorkeys.RELATIONS_DAO_KEY,
+                 event_cross_references_dao: baseinjectorkeys.EVENT_CROSS_REFERENCES_DAO_KEY):
         self.messenger = messenger
         self.document_dao = document_dao
         self.event_dao = event_dao
@@ -235,13 +222,13 @@ class CDDataAssembler:
         data['events'] = events
         data['documents'] = documents
     
-@singleton            
+            
 class ThumbnailRunner:
     
     @inject
     def __init__(self,
-                 messenger: ConsoleMessenger,
-                 document_service: DocumentService):
+                 messenger: MESSENGER_KEY,
+                 document_service: baseinjectorkeys.DOCUMENT_SERVICE_KEY):
         self.messenger = messenger
         self.document_service = document_service
         self.logger = logging.getLogger()
@@ -270,13 +257,12 @@ class ThumbnailRunner:
                 except Exception as e:
                     self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
 
-@singleton
 class DisplayFileRunner:
     
     @inject
     def __init__(self,
-                 messenger: ConsoleMessenger,
-                 document_service: DocumentService):
+                 messenger: MESSENGER_KEY,
+                 document_service: baseinjectorkeys.DOCUMENT_SERVICE_KEY):
         self.messenger = messenger
         self.document_service = document_service
         self.logger = logging.getLogger()
@@ -305,13 +291,12 @@ class DisplayFileRunner:
                 except Exception as e:
                     self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
 
-@singleton
 class PdfFileRunner:
     
     @inject
     def __init__(self,
-                 messenger: ConsoleMessenger,
-                 document_service: DocumentService):
+                 messenger: MESSENGER_KEY,
+                 document_service: baseinjectorkeys.DOCUMENT_SERVICE_KEY):
         self.messenger = messenger
         self.document_service = document_service
         self.logger = logging.getLogger()
@@ -340,11 +325,10 @@ class PdfFileRunner:
                 self.logger.error("Error on processing file %s. Message: %s." % (document.id, e))
 
 
-@singleton
 class EventSortRunner:
     
     @inject
-    def __init__(self, messenger: ConsoleMessenger):
+    def __init__(self, messenger: MESSENGER_KEY):
         self.messenger = messenger
     
     def run(self, data_dir, data_dict):
@@ -360,12 +344,11 @@ class EventSortRunner:
                 events[i].next_id = events[0]._id
             else:
                 events[i].next_id = events[i+1]._id
-
-@singleton                       
+                       
 class DocumentSortRunner:
     
     @inject
-    def __init__(self, messenger: ConsoleMessenger):
+    def __init__(self, messenger: MESSENGER_KEY):
         self.messenger = messenger
     
     def run(self, data_dir, data_dict):
@@ -381,16 +364,15 @@ class DocumentSortRunner:
                 documents[i].next_id = documents[0]._id
             else:
                 documents[i].next_id = documents[i+1]._id
-
-@singleton            
+            
 class GenerationEngine:
     
     @inject
     def __init__(self,
-                 messenger: ConsoleMessenger,
+                 messenger: MESSENGER_KEY,
                  config: CD_EXPORT_CONFIG_KEY,
-                 export_data_assembler: CDDataAssembler,
-                 textgenerator: ChronoTextGenerator,
+                 export_data_assembler: EXPORT_DATA_ASSEMBLER_KEY,
+                 textgenerator: TEXT_GENERATOR_KEY,
                  runners: RUNNERS_KEY):
         self.messenger = messenger
         self.runners = runners
@@ -503,19 +485,30 @@ class GenerationEngine:
     
 class CDExporterBasePluginModule(Module):
     
+    def configure(self, binder):
+      
+        binder.bind(MESSENGER_KEY, ClassProvider(ConsoleMessenger), scope=singleton)
+        binder.bind(GENERATOR_ENGINE_KEY, ClassProvider(GenerationEngine), scope=singleton)
+        binder.bind(EXPORT_DATA_ASSEMBLER_KEY, ClassProvider(CDDataAssembler), scope=singleton)
+        binder.bind(THUMBNAIL_RUNNER_KEY, ClassProvider(ThumbnailRunner), scope=singleton)
+        binder.bind(DISPLAY_FILE_RUNNER_KEY, ClassProvider(DisplayFileRunner), scope=singleton)
+        binder.bind(PDF_RUNNER_KEY, ClassProvider(PdfFileRunner), scope=singleton)
+        binder.bind(EVENT_SORT_RUNNER_KEY, ClassProvider(EventSortRunner), scope=singleton)
+        binder.bind(DOCUMENT_SORT_RUNNER_KEY, ClassProvider(DocumentSortRunner), scope=singleton)
+
     @provider
     @inject
     def provide_runners(self,
-                        event_sorter: EventSortRunner,
-                        document_sorter: DocumentSortRunner,
-                        thumbnail: ThumbnailRunner,
-                        display_file: DisplayFileRunner,
-                        pdf_file: PdfFileRunner) -> RUNNERS_KEY:
+                        event_sorter: EVENT_SORT_RUNNER_KEY,
+                        document_sorter: DOCUMENT_SORT_RUNNER_KEY,
+                        thumbnail: THUMBNAIL_RUNNER_KEY,
+                        display_file: DISPLAY_FILE_RUNNER_KEY,
+                        pdf_file: PDF_RUNNER_KEY) -> RUNNERS_KEY:
         return [event_sorter, document_sorter, thumbnail, display_file, pdf_file]
     
     @provider
     @inject
-    def provide_cd_exporter_config(self, config: Config) -> CD_EXPORT_CONFIG_KEY:
+    def provide_cd_exporter_config(self, config: CONFIG_KEY) -> CD_EXPORT_CONFIG_KEY:
         '''
         This patches the configuration for the properties needed
         by the CD export_data_assembler plugin.
