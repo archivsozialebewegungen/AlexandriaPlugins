@@ -16,7 +16,8 @@ from injector import BoundKey, Module, ClassProvider, singleton, inject, provide
 from alexandriabase.domain import expand_id, AlexDate,\
     DocumentEventReferenceFilter
 from alexandriabase import baseinjectorkeys
-from alexandriabase.services import DocumentFileNotFound
+from alexandriabase.services import DocumentFileNotFound, THUMBNAIL,\
+    DISPLAY_IMAGE, DOCUMENT_PDF
 from alexandriabase.daos import DOCUMENT_TABLE, EVENT_TABLE
 from alexandriabase.baseinjectorkeys import CONFIG_KEY
 from alexandriabase.config import NoSuchConfigValue
@@ -24,6 +25,9 @@ from alexplugins import _
 from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from shutil import copyfile
 import logging
+from pathlib import Path
+
+use_sym_links = True
 
 CD_EXPORT_CONFIG_KEY = BoundKey("cd_exporter_copnfig")
 
@@ -35,6 +39,7 @@ DOCUMENT_SORT_RUNNER_KEY = BoundKey("document_sort_runner")
 THUMBNAIL_RUNNER_KEY = BoundKey("thumbnail_runner")
 PDF_RUNNER_KEY = BoundKey("pdf_runner")
 DISPLAY_FILE_RUNNER_KEY = BoundKey("display_file_runner")
+MULTI_MEDIA_FILE_RUNNER_KEY = BoundKey("multi_media_file_runner")
 
 GENERATOR_ENGINE_KEY = BoundKey("generator_engine")
 RUNNERS_KEY = BoundKey("runners")
@@ -223,7 +228,7 @@ class CDDataAssembler:
         data['documents'] = documents
     
             
-class ThumbnailRunner:
+class CopyThumbnailRunner:
     
     @inject
     def __init__(self,
@@ -236,15 +241,12 @@ class ThumbnailRunner:
     def run(self, data_dir, data_dict):
         number_of_documents = len(data_dict['data']['documents'])
         counter = 0
-        percentage_old = -1
         dir_name = os.path.join(data_dir, 'thumbnails')
         os.makedirs(dir_name, exist_ok=True)
         for document in data_dict['data']['documents']:
             counter += 1
             percentage = int(counter * 100.0 / number_of_documents)
-            if percentage != percentage_old:
-                self.messenger.show(_("CD generation: Fetching thumbnail files... %d%% done.") % percentage)
-                percentage_old = percentage
+            self.messenger.show(_("CD generation: Fetching thumbnail files... %d%% done.") % percentage)
             for file_info in document.file_infos:
                 try:
                     file_name = os.path.join(dir_name,
@@ -257,7 +259,37 @@ class ThumbnailRunner:
                 except Exception as e:
                     self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
 
-class DisplayFileRunner:
+class SymLinkThumbnailRunner:
+    
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_manager: baseinjectorkeys.DOCUMENT_FILE_MANAGER_KEY):
+        self.messenger = messenger
+        self.document_manager = document_manager
+        self.logger = logging.getLogger()
+        
+    def run(self, data_dir, data_dict):
+        number_of_documents = len(data_dict['data']['documents'])
+        counter = 0
+        dir_name = os.path.join(data_dir, 'thumbnails')
+        os.makedirs(dir_name, exist_ok=True)
+        for document in data_dict['data']['documents']:
+            counter += 1
+            percentage = int(counter * 100.0 / number_of_documents)
+            self.messenger.show(_("CD generation: Fetching thumbnail files... %d%% done.") % percentage)
+            for file_info in document.file_infos:
+                try:
+                    target_file_name = os.path.join(dir_name,
+                                             "%s.png" % file_info.get_basename())
+                    source_file_name = self.document_manager.get_generated_file_path(file_info, THUMBNAIL)
+                    Path(target_file_name).symlink_to(source_file_name)
+                except DocumentFileNotFound:
+                    self.logger.warn("Did not find file %s" % file_info.get_basename())
+                except Exception as e:
+                    self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
+
+class CopyLinkDisplayFileRunner:
     
     @inject
     def __init__(self,
@@ -270,15 +302,12 @@ class DisplayFileRunner:
     def run(self, data_dir, data_dict):
         number_of_documents = len(data_dict['data']['documents'])
         counter = 0
-        percentage_old = -1
         dir_name = os.path.join(data_dir, 'screen')
         os.makedirs(dir_name, exist_ok=True)
         for document in data_dict['data']['documents']:
             counter += 1
             percentage = int(counter * 100.0 / number_of_documents)
-            if percentage != percentage_old:
-                self.messenger.show(_("CD generation: Fetching display files... %d%% done.") % percentage)
-                percentage_old = percentage
+            self.messenger.show(_("CD generation: Fetching display files... %d%% done.") % percentage)
             for file_info in document.file_infos:
                 try:
                     file_name = os.path.join(dir_name,
@@ -291,7 +320,38 @@ class DisplayFileRunner:
                 except Exception as e:
                     self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
 
-class PdfFileRunner:
+class SymLinkDisplayFileRunner:
+    
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_manager: baseinjectorkeys.DOCUMENT_FILE_MANAGER_KEY):
+        self.messenger = messenger
+        self.document_manager = document_manager
+        self.logger = logging.getLogger()
+        
+    def run(self, data_dir, data_dict):
+        number_of_documents = len(data_dict['data']['documents'])
+        counter = 0
+        dir_name = os.path.join(data_dir, 'screen')
+        os.makedirs(dir_name, exist_ok=True)
+        for document in data_dict['data']['documents']:
+            counter += 1
+            percentage = int(counter * 100.0 / number_of_documents)
+            self.messenger.show(_("CD generation: Fetching display files... %d%% done.") % percentage)
+            for file_info in document.file_infos:
+                try:
+                    target_file_name = os.path.join(dir_name,
+                                             "%s.png" % file_info.get_basename())
+                    source_file_name = self.document_manager.get_generated_file_path(file_info, DISPLAY_IMAGE)
+                    Path(target_file_name).symlink_to(source_file_name)
+                except DocumentFileNotFound:
+                    self.logger.warn("Did not find file %s" % file_info.get_basename())
+                except Exception as e:
+                    self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
+
+
+class CopyPdfFileRunner:
     
     @inject
     def __init__(self,
@@ -324,6 +384,103 @@ class PdfFileRunner:
             except Exception as e:
                 self.logger.error("Error on processing file %s. Message: %s." % (document.id, e))
 
+class SymLinkPdfFileRunner:
+    
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_manager: baseinjectorkeys.DOCUMENT_FILE_MANAGER_KEY):
+        self.messenger = messenger
+        self.document_manager = document_manager
+        self.logger = logging.getLogger()
+        
+    def run(self, data_dir, data_dict):
+        number_of_documents = len(data_dict['data']['documents'])
+        counter = 0
+        percentage_old = -1
+        dir_name = os.path.join(data_dir, 'pdf')
+        os.makedirs(dir_name, exist_ok=True)
+        for document in data_dict['data']['documents']:
+            counter += 1
+            percentage = int(counter * 100.0 / number_of_documents)
+            if percentage != percentage_old:
+                self.messenger.show(_("CD generation: Fetching pdf files... %d%% done.") % percentage)
+                percentage_old = percentage
+            try:
+                file_info = self.document_manager.document_file_info_dao.get_by_id(document.id)
+                target_file_name = os.path.join(dir_name,
+                                             "%s.pdf" % file_info.get_basename())
+                source_file_name = self.document_manager.get_generated_file_path(file_info, DOCUMENT_PDF)
+                Path(target_file_name).symlink_to(source_file_name)
+            except DocumentFileNotFound:
+                self.logger.warn("Did not find file %s" % document.id)
+            except Exception as e:
+                self.logger.error("Error on processing file %s. Message: %s." % (document.id, e))
+
+class CopyMultimediaRunner:
+    
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_service: baseinjectorkeys.DOCUMENT_SERVICE_KEY):
+        self.messenger = messenger
+        self.document_service = document_service
+        self.logger = logging.getLogger()
+        
+    def run(self, data_dir, data_dict):
+        number_of_documents = len(data_dict['data']['documents'])
+        counter = 0
+        dir_name = os.path.join(data_dir, 'multimedia')
+        os.makedirs(dir_name, exist_ok=True)
+        for document in data_dict['data']['documents']:
+            counter += 1
+            percentage = int(counter * 100.0 / number_of_documents)
+            self.messenger.show(_("CD generation: Fetching multimedia files... %d%% done.") % percentage)
+            for file_info in document.file_infos:
+                if file_info.filetype != 'mpg':
+                    continue
+                
+                try:
+                    file_name = os.path.join(dir_name, file_info.get_file_name())
+                    file = open(file_name, "wb")
+                    file.write(self.document_service.get_file_for_file_info(file_info))
+                    file.close()
+                except DocumentFileNotFound:
+                    self.logger.warn("Did not find file %s" % file_info.get_basename())
+                except Exception as e:
+                    self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
+
+class SymLinkMultimediaRunner:
+    
+    @inject
+    def __init__(self,
+                 messenger: MESSENGER_KEY,
+                 document_manager: baseinjectorkeys.DOCUMENT_FILE_MANAGER_KEY):
+        self.messenger = messenger
+        self.document_manager = document_manager
+        self.logger = logging.getLogger()
+        
+    def run(self, data_dir, data_dict):
+        number_of_documents = len(data_dict['data']['documents'])
+        counter = 0
+        dir_name = os.path.join(data_dir, 'multimedia')
+        os.makedirs(dir_name, exist_ok=True)
+        for document in data_dict['data']['documents']:
+            counter += 1
+            percentage = int(counter * 100.0 / number_of_documents)
+            self.messenger.show(_("CD generation: Fetching multimedia files... %d%% done.") % percentage)
+            for file_info in document.file_infos:
+                if file_info.filetype != 'mpg':
+                    continue
+                
+                try:
+                    target_file_name = os.path.join(dir_name, file_info.get_file_name())
+                    source_file_name = self.document_manager.get_file_path(file_info)
+                    Path(target_file_name).symlink_to(source_file_name)
+                except DocumentFileNotFound:
+                    self.logger.warn("Did not find file %s" % file_info.get_basename())
+                except Exception as e:
+                    self.logger.error("Error on processing file %s. Message: %s." % (file_info.get_basename(), e))
 
 class EventSortRunner:
     
@@ -364,7 +521,7 @@ class DocumentSortRunner:
                 documents[i].next_id = documents[0]._id
             else:
                 documents[i].next_id = documents[i+1]._id
-            
+       
 class GenerationEngine:
     
     @inject
@@ -473,7 +630,8 @@ class GenerationEngine:
         call([genisoimage,
              "-J",
              "-joliet-long", 
-             "-r", 
+             "-r",
+             "-f", 
              "-apple", 
              "-o", iso_file_name,
              app_dir
@@ -490,11 +648,12 @@ class CDExporterBasePluginModule(Module):
         binder.bind(MESSENGER_KEY, ClassProvider(ConsoleMessenger), scope=singleton)
         binder.bind(GENERATOR_ENGINE_KEY, ClassProvider(GenerationEngine), scope=singleton)
         binder.bind(EXPORT_DATA_ASSEMBLER_KEY, ClassProvider(CDDataAssembler), scope=singleton)
-        binder.bind(THUMBNAIL_RUNNER_KEY, ClassProvider(ThumbnailRunner), scope=singleton)
-        binder.bind(DISPLAY_FILE_RUNNER_KEY, ClassProvider(DisplayFileRunner), scope=singleton)
-        binder.bind(PDF_RUNNER_KEY, ClassProvider(PdfFileRunner), scope=singleton)
+        binder.bind(THUMBNAIL_RUNNER_KEY, ClassProvider(SymLinkThumbnailRunner), scope=singleton)
+        binder.bind(DISPLAY_FILE_RUNNER_KEY, ClassProvider(SymLinkDisplayFileRunner), scope=singleton)
+        binder.bind(PDF_RUNNER_KEY, ClassProvider(SymLinkPdfFileRunner), scope=singleton)
         binder.bind(EVENT_SORT_RUNNER_KEY, ClassProvider(EventSortRunner), scope=singleton)
         binder.bind(DOCUMENT_SORT_RUNNER_KEY, ClassProvider(DocumentSortRunner), scope=singleton)
+        binder.bind(MULTI_MEDIA_FILE_RUNNER_KEY, ClassProvider(SymLinkMultimediaRunner), scope=singleton)
 
     @provider
     @inject
@@ -503,8 +662,9 @@ class CDExporterBasePluginModule(Module):
                         document_sorter: DOCUMENT_SORT_RUNNER_KEY,
                         thumbnail: THUMBNAIL_RUNNER_KEY,
                         display_file: DISPLAY_FILE_RUNNER_KEY,
-                        pdf_file: PDF_RUNNER_KEY) -> RUNNERS_KEY:
-        return [event_sorter, document_sorter, thumbnail, display_file, pdf_file]
+                        pdf_file: PDF_RUNNER_KEY,
+                        multi_media: MULTI_MEDIA_FILE_RUNNER_KEY) -> RUNNERS_KEY:
+        return [event_sorter, document_sorter, thumbnail, display_file, pdf_file, multi_media]
     
     @provider
     @inject
