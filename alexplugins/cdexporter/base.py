@@ -46,7 +46,6 @@ GENERATOR_ENGINE_KEY = BoundKey("generator_engine")
 RUNNERS_KEY = BoundKey("runners")
 
 EXPORT_DATA_ASSEMBLER_KEY = BoundKey('JSON_exporter')
-TEXT_GENERATOR_KEY = BoundKey('text_generator')
 
 def get_zip_file():
     '''
@@ -542,12 +541,10 @@ class GenerationEngine:
                  messenger: MESSENGER_KEY,
                  config: CD_EXPORT_CONFIG_KEY,
                  export_data_assembler: EXPORT_DATA_ASSEMBLER_KEY,
-                 textgenerator: TEXT_GENERATOR_KEY,
                  runners: RUNNERS_KEY):
         self.messenger = messenger
         self.runners = runners
         self.export_data_assembler = export_data_assembler
-        self.textgenerator = textgenerator
         self.config = config
             
         self.data_dict = {'data': {}}

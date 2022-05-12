@@ -13,7 +13,7 @@ from alexandriabase.domain import AlexDate
 from alexplugins import _
 from alexplugins.cdexporter.base import GENERATOR_ENGINE_KEY, \
     ExportInfo, CDExporterBasePluginModule, MESSENGER_KEY,\
-    TEXT_GENERATOR_KEY, load_export_info
+    load_export_info
 from tkgui.PluginManager import EventMenuAddition
 from tkinter import Label
 from alexplugins.systematic.tkgui import SYSTEMATIC_POINT_SELECTION_DIALOG_KEY
@@ -33,6 +33,8 @@ EXPORT_INFO_WIZARD_KEY = BoundKey('export_wizard')
 EXPORT_INFO_WIZARD_PRESENTER = BoundKey('export_info_wizard_presenter')
 
 CD_EXPORTER_MENU_ADDITIONS_GENERIC_PRESENTER_KEY = BoundKey('cd_exporter_plugin_generic_presenter')
+
+TEXT_GENERATOR_KEY = BoundKey('text_generator')
 
 class ChronoInfo(object):
     '''
