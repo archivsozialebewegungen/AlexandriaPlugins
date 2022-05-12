@@ -17,7 +17,7 @@ from alexandriabase.domain import expand_id, AlexDate,\
     DocumentEventReferenceFilter
 from alexandriabase import baseinjectorkeys
 from alexandriabase.services import DocumentFileNotFound, THUMBNAIL,\
-    DISPLAY_IMAGE, DOCUMENT_PDF
+    DISPLAY_IMAGE, DOCUMENT_PDF, DocumentService, DocumentFileManager
 from alexandriabase.daos import DOCUMENT_TABLE, EVENT_TABLE
 from alexandriabase.baseinjectorkeys import CONFIG_KEY
 from alexandriabase.config import NoSuchConfigValue
@@ -26,6 +26,7 @@ from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
 from shutil import copyfile
 import logging
 from pathlib import Path
+from os.path import exists
 
 use_sym_links = True
 
@@ -264,9 +265,11 @@ class SymLinkThumbnailRunner:
     @inject
     def __init__(self,
                  messenger: MESSENGER_KEY,
-                 document_manager: baseinjectorkeys.DOCUMENT_FILE_MANAGER_KEY):
+                 document_manager: DocumentFileManager,
+                 document_service: DocumentService):
         self.messenger = messenger
         self.document_manager = document_manager
+        self.document_service = document_service
         self.logger = logging.getLogger()
         
     def run(self, data_dir, data_dict):
@@ -283,6 +286,8 @@ class SymLinkThumbnailRunner:
                     target_file_name = os.path.join(dir_name,
                                              "%s.png" % file_info.get_basename())
                     source_file_name = self.document_manager.get_generated_file_path(file_info, THUMBNAIL)
+                    if not exists(source_file_name):
+                        self.document_service.get_thumbnail(file_info)
                     Path(target_file_name).symlink_to(source_file_name)
                 except DocumentFileNotFound:
                     self.logger.warn("Did not find file %s" % file_info.get_basename())
@@ -325,9 +330,11 @@ class SymLinkDisplayFileRunner:
     @inject
     def __init__(self,
                  messenger: MESSENGER_KEY,
-                 document_manager: baseinjectorkeys.DOCUMENT_FILE_MANAGER_KEY):
+                 document_manager: DocumentFileManager,
+                 document_service: DocumentService):
         self.messenger = messenger
         self.document_manager = document_manager
+        self.document_service = document_service
         self.logger = logging.getLogger()
         
     def run(self, data_dir, data_dict):
@@ -345,6 +352,8 @@ class SymLinkDisplayFileRunner:
                                              "%s.png" % file_info.get_basename())
                     source_file_name = self.document_manager.get_generated_file_path(file_info, DISPLAY_IMAGE)
                     Path(target_file_name).symlink_to(source_file_name)
+                    if not exists(source_file_name):
+                        self.document_service.get_display_image(file_info)
                 except DocumentFileNotFound:
                     self.logger.warn("Did not find file %s" % file_info.get_basename())
                 except Exception as e:
@@ -389,9 +398,11 @@ class SymLinkPdfFileRunner:
     @inject
     def __init__(self,
                  messenger: MESSENGER_KEY,
-                 document_manager: baseinjectorkeys.DOCUMENT_FILE_MANAGER_KEY):
+                 document_manager: DocumentFileManager,
+                 document_service: DocumentService):
         self.messenger = messenger
         self.document_manager = document_manager
+        self.document_service = document_service
         self.logger = logging.getLogger()
         
     def run(self, data_dir, data_dict):
@@ -411,6 +422,8 @@ class SymLinkPdfFileRunner:
                 target_file_name = os.path.join(dir_name,
                                              "%s.pdf" % file_info.get_basename())
                 source_file_name = self.document_manager.get_generated_file_path(file_info, DOCUMENT_PDF)
+                if not exists(source_file_name):
+                    self.document_service.get_pdf(document)
                 Path(target_file_name).symlink_to(source_file_name)
             except DocumentFileNotFound:
                 self.logger.warn("Did not find file %s" % document.id)
@@ -437,7 +450,7 @@ class CopyMultimediaRunner:
             percentage = int(counter * 100.0 / number_of_documents)
             self.messenger.show(_("CD generation: Fetching multimedia files... %d%% done.") % percentage)
             for file_info in document.file_infos:
-                if file_info.filetype != 'mpg':
+                if file_info.filetype != 'mpg' and file_info.filetype != "mp4":
                     continue
                 
                 try:
@@ -470,7 +483,7 @@ class SymLinkMultimediaRunner:
             percentage = int(counter * 100.0 / number_of_documents)
             self.messenger.show(_("CD generation: Fetching multimedia files... %d%% done.") % percentage)
             for file_info in document.file_infos:
-                if file_info.filetype != 'mpg':
+                if file_info.filetype != 'mpg' and file_info.filetype != 'mp4':
                     continue
                 
                 try:

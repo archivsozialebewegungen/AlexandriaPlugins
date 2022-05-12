@@ -307,7 +307,12 @@ den Zeitraum zwischen dem %s und dem %s relevant sind.
 Impressum
 =========
 
-Diese CD wird herausgegeben vom Archiv Soziale Bewegungen in Baden
+Diese CD wird herausgegeben von:
+
+     Archiv Soziale Bewegungen in Baden e.V.
+     Adlerstr.12
+     79098 Freiburg
+     
 """
         return pagecontent
         
