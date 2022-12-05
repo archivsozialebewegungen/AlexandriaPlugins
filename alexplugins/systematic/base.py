@@ -19,7 +19,7 @@ from reportlab.platypus.paragraph import Paragraph
 from alexandriabase import baseinjectorkeys
 from alexandriabase.base_exceptions import DataError
 from alexandriabase.daos import GenericDao, ALEXANDRIA_METADATA,\
-    DocumentFilterExpressionBuilder, DOCUMENT_TABLE
+    DocumentFilterExpressionBuilder, DOCUMENT_TABLE, DocumentDao
 from alexandriabase.domain import Tree, NoSuchNodeException
 from alexplugins import _
 from alexplugins.systematic import ROMAN_NUMERALS, SYSTEMATIC_DAO_KEY,\
@@ -324,10 +324,11 @@ class SystematicDao(GenericDao):
     '''
 
     @inject
-    def __init__(self, db_engine: baseinjectorkeys.DB_ENGINE_KEY):
+    def __init__(self, document_dao: DocumentDao, db_engine: baseinjectorkeys.DB_ENGINE_KEY):
         super().__init__(db_engine)
         self.cache = None
         self.table = SYSTEMATIC_TABLE
+        self.document_dao = document_dao
 
     def get_tree(self):
         '''
@@ -429,7 +430,7 @@ class SystematicDao(GenericDao):
                     self.table.c.roemisch == identifier.roman,
                     self.table.c.sub == identifier.subfolder)
 
-
+@singleton
 class DocumentSystematicRelationsDao(GenericDao):
     '''
     Handles the document to systematic relations
@@ -466,11 +467,13 @@ class DocumentSystematicRelationsDao(GenericDao):
         return number_of_relations > 0
         
     def _create_systematic_reference_where_clause(self, systematic_id):
-        where_clause = self.dsref_table.c.systematik == systematic_id.node_id  
-        where_clause = and_(self.dsref_table.c.roemisch == systematic_id.roman, where_clause)  
-        where_clause = and_(self.dsref_table.c.sub == systematic_id.subfolder, where_clause)
+        where_clause = or_(self.dsref_table.c.systematik == systematic_id.node_id, self.dsref_table.c.systematik.like("%s.%%" % systematic_id.node_id))
+        if systematic_id.roman != 0:
+            where_clause = and_(self.dsref_table.c.roemisch == systematic_id.roman, where_clause)  
+        if systematic_id.subfolder != 0:
+            where_clause = and_(self.dsref_table.c.sub == systematic_id.subfolder, where_clause)
         return where_clause  
-    
+
     def fetch_signature_for_document_id(self, document_id):
         '''
         Does what the method name says.
@@ -571,12 +574,61 @@ class SystematicService:
     # pylint: disable=invalid-name
     @inject
     def __init__(self,
-                 systematic_dao: SYSTEMATIC_DAO_KEY,
-                 document_dao: baseinjectorkeys.DOCUMENT_DAO_KEY,
-                references_dao: DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY):
+                 document_dao: DocumentDao,
+                 systematic_dao: SystematicDao,
+                 references_dao: DocumentSystematicRelationsDao):
         self.systematic_dao = systematic_dao
         self.document_dao = document_dao
         self.references_dao = references_dao
+        
+    def fetch_document_ids_for_main_systematic(self, systematic: int):
+        
+        page = 1
+        page_size = 50
+        if systematic != 7:
+            condition = or_(DOCUMENT_TABLE.c.standort == "%s" % systematic,
+                            DOCUMENT_TABLE.c.standort.like("%s.%%" % systematic))
+        else:
+            condition = or_(DOCUMENT_TABLE.c.standort == "7",
+                            DOCUMENT_TABLE.c.standort.like("7.%%"),
+                            DOCUMENT_TABLE.c.standort == "8",
+                            DOCUMENT_TABLE.c.standort.like("8.%%"),
+                            DOCUMENT_TABLE.c.standort == "6.1",
+                            DOCUMENT_TABLE.c.standort.like("6.1.%%"),
+                            DOCUMENT_TABLE.c.standort == "5.3.11",
+                            DOCUMENT_TABLE.c.standort.like("5.3.11.%%"),
+                            DOCUMENT_TABLE.c.standort == "3.4.7",
+                            DOCUMENT_TABLE.c.standort.like("3.4.7.%%"),
+                            DOCUMENT_TABLE.c.standort == "5.3.8",
+                            DOCUMENT_TABLE.c.standort.like("5.3.8.8.%%"),
+                            DOCUMENT_TABLE.c.standort == "23",
+                            DOCUMENT_TABLE.c.standort.like("23.%%"))
+        temp_dict_ids = {}
+        documents = self.document_dao.find(condition, page, page_size)
+        while len(documents) > 0:
+            for document in documents:
+                temp_dict_ids[document.id] = 1
+            page += 1
+            documents = self.document_dao.find(condition, page, page_size)
+
+        for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("%s" % systematic)):
+            temp_dict_ids[document_id] = 1
+            
+        if systematic == 7:
+            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("23")):
+                temp_dict_ids[document_id] = 1
+            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("8")):
+                temp_dict_ids[document_id] = 1
+            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("5.3.11")):
+                temp_dict_ids[document_id] = 1
+            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("3.4.7")):
+                temp_dict_ids[document_id] = 1
+            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("5.3.8.8")):
+                temp_dict_ids[document_id] = 1
+            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("6.1")):
+                temp_dict_ids[document_id] = 1
+                
+        return list(temp_dict_ids.keys())
         
     def fetch_systematic_entries_for_document(self, document):
         '''
