@@ -1,1 +1,4 @@
-markdown>=2.6.8
+importlib-metadata==6.3.0
+Markdown==3.4.3
+roman==4.0
+zipp==3.15.0

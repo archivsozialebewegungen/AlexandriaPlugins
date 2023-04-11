@@ -22,10 +22,11 @@ from alexandriabase.daos import GenericDao, ALEXANDRIA_METADATA,\
     DocumentFilterExpressionBuilder, DOCUMENT_TABLE, DocumentDao
 from alexandriabase.domain import Tree, NoSuchNodeException
 from alexplugins import _
-from alexplugins.systematic import ROMAN_NUMERALS, SYSTEMATIC_DAO_KEY,\
+from alexplugins.systematic import SYSTEMATIC_DAO_KEY,\
     DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY, SYSTEMATIC_SERVICE_KEY,\
     SYSTEMATIC_PDF_GENERATION_SERVICE_KEY,\
     SYSTEMATIC_HTML_GENERATION_SERVICE_KEY
+import roman
 
 SYSTEMATIC_TABLE = Table(
     'systematik', ALEXANDRIA_METADATA,
@@ -58,17 +59,17 @@ def systematic_string_to_identifier(raw_systematic_id):
     if not matcher:
         raise DataError("%s is not a valid systematic id!" % raw_systematic_id)
     point = matcher.group(1)
-    roman = matcher.group(3)
-    if not roman:
-        roman = 0
+    roemisch = matcher.group(3)
+    if not roemisch:
+        roemisch = 0
     else:
-        roman = ROMAN_NUMERALS.index(roman)
+        roemisch = roman.fromRoman(roemisch)
     subfolder = matcher.group(5)
     if not subfolder:
         subfolder = 0
     else:
         subfolder = int(subfolder)
-    return SystematicIdentifier(point, roman, subfolder)
+    return SystematicIdentifier(point, roemisch, subfolder)
 
 class SystematicIdentifier:
     ''' The systematic is a hierarchical tree with, alas,
@@ -232,13 +233,13 @@ class SystematicIdentifier:
         if self.subfolder:
             if self.roman:
                 return "%s.%s-%s" % (self.node_id,
-                                     ROMAN_NUMERALS[self.roman],
+                                     roman.toRoman(self.roman),
                                      self.subfolder)
             else:
                 return "%s-%s" % (self.node_id,
                                   self.subfolder)
         if self.roman:
-            return "%s.%s" % (self.node_id, ROMAN_NUMERALS[self.roman])
+            return "%s.%s" % (self.node_id, roman.toRoman(self.roman))
         return self.node_id
 
     def __gt__(self, other):
@@ -859,7 +860,7 @@ class SystematicPdfGenerationService(object):
         style.spaceAfter = 6
         style.leftIndent = 12
         paragraph = Paragraph("%s: %s" % (
-            ROMAN_NUMERALS[node.entity.id.roman],
+            roman.toRoman(node.entity.id.roman),
             node.entity.description), style)
         story.append(paragraph)
         return story
@@ -980,7 +981,7 @@ class SystematicHtmlGenerationService(object):
             
     def write_roman_rows(self, file, nodes):
         for node in nodes:
-            file.write("<tr><td>%s</td><td>%s</td></tr>\n" % (ROMAN_NUMERALS[node.entity.id.roman],
+            file.write("<tr><td>%s</td><td>%s</td></tr>\n" % (roman.toRoman(node.entity.id.roman),
                                                        node.entity.description))
             if len(node.children) > 0:
                 file.write('<tr><td colspan="2">')
