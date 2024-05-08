@@ -82,7 +82,7 @@ class TestSystematicDao(DatabaseBaseTest):
         self.dao.delete(identifier)
         parent_node = self.dao.get_node(parent_id)
         self.assertEqual(len(parent_node.children), 2)
-
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

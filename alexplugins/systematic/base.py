@@ -19,8 +19,10 @@ from reportlab.platypus.paragraph import Paragraph
 from alexandriabase import baseinjectorkeys
 from alexandriabase.base_exceptions import DataError
 from alexandriabase.daos import GenericDao, ALEXANDRIA_METADATA,\
-    DocumentFilterExpressionBuilder, DOCUMENT_TABLE, DocumentDao
-from alexandriabase.domain import Tree, NoSuchNodeException
+    DocumentFilterExpressionBuilder, DOCUMENT_TABLE, DocumentDao, EVENT_TABLE,\
+    DOCUMENT_EVENT_REFERENCE_TABLE, EventFilterExpressionBuilder,\
+    DocumentEventRelationsDao
+from alexandriabase.domain import Tree, NoSuchNodeException, EventFilter
 from alexplugins import _
 from alexplugins.systematic import SYSTEMATIC_DAO_KEY,\
     DOCUMENT_SYSTEMATIC_RELATIONS_DAO_KEY, SYSTEMATIC_SERVICE_KEY,\
@@ -438,10 +440,14 @@ class DocumentSystematicRelationsDao(GenericDao):
     '''
     
     @inject
-    def __init__(self, db_engine: baseinjectorkeys.DB_ENGINE_KEY):
+    def __init__(self, db_engine: baseinjectorkeys.DB_ENGINE_KEY,
+                 event_filter_expression_builder: EventFilterExpressionBuilder):
         super().__init__(db_engine)
+        self.event_filter_expression_builder = event_filter_expression_builder
         self.dsref_table = DOCUMENT_SYSTEMATIC_REFERENCE_TABLE
+        self.deref_table = DOCUMENT_EVENT_REFERENCE_TABLE
         self.doc_table = DOCUMENT_TABLE
+        self.event_table = EVENT_TABLE
         
     def fetch_document_ids_for_systematic_id(self, systematic_id):
         '''
@@ -452,6 +458,41 @@ class DocumentSystematicRelationsDao(GenericDao):
         result = self._get_connection().execute(query)
         return [row[self.dsref_table.c.hauptnr] for row in result.fetchall()]
     
+    def fetch_document_ids_for_systematic_id_in_timerange(self, systematic_id, earliest_date, latest_date):
+        '''
+        Does what the method name says.
+        '''
+        join = self.dsref_table.outerjoin(
+            self.deref_table,
+            self.dsref_table.c.hauptnr == self.deref_table.c.laufnr).outerjoin(
+                self.doc_table,
+                self.deref_table.c.laufnr == self.doc_table.c.hauptnr).outerjoin(
+                    self.event_table,
+                    self.event_table.c.ereignis_id == self.deref_table.c.ereignis_id)        
+
+        systematic_where_clause = self._create_systematic_reference_where_clause(systematic_id)
+
+        date_filter = EventFilter()
+        date_filter.earliest_date = earliest_date
+        date_filter.latest_date = latest_date
+        daterange_where_clause = self.event_filter_expression_builder.create_filter_expression(date_filter)
+
+        where_clause = and_(systematic_where_clause, daterange_where_clause)
+
+        query = select([self.doc_table.c.hauptnr, self.deref_table.c.ereignis_id]).\
+            distinct().select_from(join).where(where_clause)
+        
+        references = {}
+        result = self._get_connection().execute(query)
+        for row in result.fetchall():
+            document_id = row[self.doc_table.c.hauptnr]
+            event_id = row[self.deref_table.c.ereignis_id]
+            if document_id not in references:
+                references[document_id] = []
+            references[document_id].append(event_id)
+        
+        return references
+
     def systematic_id_is_in_use(self, systematic_id):
         '''
         Checks if the systematic id is used by a document, either
@@ -577,10 +618,25 @@ class SystematicService:
     def __init__(self,
                  document_dao: DocumentDao,
                  systematic_dao: SystematicDao,
-                 references_dao: DocumentSystematicRelationsDao):
+                 document_systematic_references_dao: DocumentSystematicRelationsDao,
+                 document_event_references_dao: DocumentEventRelationsDao):
         self.systematic_dao = systematic_dao
         self.document_dao = document_dao
-        self.references_dao = references_dao
+        self.document_systematic_references_dao = document_systematic_references_dao
+        self.document_event_references_dao = document_event_references_dao
+        
+    def fetch_doc_event_references(self, ref_filter):
+        
+        references = self.document_event_references_dao.fetch_doc_event_references(ref_filter)
+        additional_references = self.document_systematic_references_dao.fetch_document_ids_for_systematic_id_in_timerange(
+            systematic_string_to_identifier(ref_filter.signature), ref_filter.earliest_date, ref_filter.latest_date)
+        for document_id in additional_references.keys():
+            if document_id not in references:
+                references[document_id] = []
+            for event_id in additional_references[document_id]:
+                if event_id not in references[document_id]:
+                    references[document_id].append(event_id)
+        return references
         
     def fetch_document_ids_for_main_systematic(self, systematic: int):
         
@@ -612,21 +668,21 @@ class SystematicService:
             page += 1
             documents = self.document_dao.find(condition, page, page_size)
 
-        for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("%s" % systematic)):
+        for document_id in self.document_systematic_references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("%s" % systematic)):
             temp_dict_ids[document_id] = 1
             
         if systematic == 7:
-            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("23")):
+            for document_id in self.document_systematic_references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("23")):
                 temp_dict_ids[document_id] = 1
-            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("8")):
+            for document_id in self.document_systematic_references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("8")):
                 temp_dict_ids[document_id] = 1
-            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("5.3.11")):
+            for document_id in self.document_systematic_references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("5.3.11")):
                 temp_dict_ids[document_id] = 1
-            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("3.4.7")):
+            for document_id in self.document_systematic_references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("3.4.7")):
                 temp_dict_ids[document_id] = 1
-            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("5.3.8.8")):
+            for document_id in self.document_systematic_references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("5.3.8.8")):
                 temp_dict_ids[document_id] = 1
-            for document_id in self.references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("6.1")):
+            for document_id in self.document_systematic_references_dao.fetch_document_ids_for_systematic_id(SystematicIdentifier("6.1")):
                 temp_dict_ids[document_id] = 1
                 
         return list(temp_dict_ids.keys())
@@ -642,13 +698,13 @@ class SystematicService:
         if document is None or document.id is None:
             return []
         systematic_entries = []
-        signature = self.references_dao.fetch_signature_for_document_id(document.id)
+        signature = self.document_systematic_references_dao.fetch_signature_for_document_id(document.id)
         if signature:
             systematic_entry = QualifiedSystematicPoint(
                 self._fetch_systematic_entry_for_id(signature), 
                 True)
             systematic_entries.append(systematic_entry)
-        for systematic_id in self.references_dao.fetch_systematik_ids_for_document_id(document.id):
+        for systematic_id in self.document_systematic_references_dao.fetch_systematik_ids_for_document_id(document.id):
             systematic_entries.append(QualifiedSystematicPoint(
                 self.systematic_dao.get_by_id(systematic_id),
                 False))
@@ -664,7 +720,7 @@ class SystematicService:
         has a signature, it will added as just attributed entry, otherwise
         it becomes the signature of the document.
         '''
-        signature = self.references_dao.fetch_signature_for_document_id(document.id)
+        signature = self.document_systematic_references_dao.fetch_signature_for_document_id(document.id)
         if signature:
             self._add_systematic_relation(document, systematic_node)
         else:
@@ -674,7 +730,7 @@ class SystematicService:
         '''
         Adds node as attributed systematic entry.
         '''
-        self.references_dao.add_systematik_document_relation(
+        self.document_systematic_references_dao.add_systematik_document_relation(
             systematic_node.id,
             document.id)
     
@@ -682,7 +738,7 @@ class SystematicService:
         '''
         Adds node as signature.
         '''
-        self.references_dao.set_signature_for_document_id(
+        self.document_systematic_references_dao.set_signature_for_document_id(
             document.id,
             systematic_node)
         
@@ -722,7 +778,7 @@ class SystematicService:
         Removes signature from document.
         '''
         document.standort = None
-        self.references_dao.set_signature_for_document_id(
+        self.document_systematic_references_dao.set_signature_for_document_id(
             document.id,
             None)
         
@@ -730,7 +786,7 @@ class SystematicService:
         '''
         Removes attributed systematic point from document.
         '''
-        self.references_dao.remove_systematik_document_relation(
+        self.document_systematic_references_dao.remove_systematik_document_relation(
             qualified_systematic_entry.id,
             document.id)
 
@@ -764,7 +820,7 @@ class SystematicService:
         '''
         Checks if a systematic id is in use for a document
         '''
-        return self.references_dao.systematic_id_is_in_use(systematic_id)
+        return self.document_systematic_references_dao.systematic_id_is_in_use(systematic_id)
 
     def next_sibling_exists(self, systematic_id):
         '''

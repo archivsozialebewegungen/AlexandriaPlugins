@@ -179,7 +179,7 @@ class CDDataAssembler:
         self.document_dao = document_dao
         self.event_dao = event_dao
         self.document_file_info_dao = document_file_info_dao
-        self.references_dao = references_dao
+        self.document_systematic_references_dao = references_dao
         self.event_cross_references_dao = event_cross_references_dao
     
     def export(self, export_info, data):
@@ -192,7 +192,7 @@ class CDDataAssembler:
         ref_filter.earliest_date = export_info.start_date
         ref_filter.latest_date = export_info.end_date
         
-        event_references = self.references_dao.fetch_doc_event_references(ref_filter)
+        event_references = self.document_systematic_references_dao.fetch_doc_event_references(ref_filter)
         document_references = {}
         
         document_map = {}

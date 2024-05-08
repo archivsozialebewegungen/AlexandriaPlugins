@@ -6,11 +6,12 @@ Created on 11.10.2015
 from sqlalchemy.sql.expression import select
 import unittest
 
-from alexandriabase.daos import DOCUMENT_TABLE
+from alexandriabase.daos import DOCUMENT_TABLE, EventFilterExpressionBuilder
 from daotests.test_base import DatabaseBaseTest
 from alex_test_utils import load_table_data
 from alexplugins.systematic.base import DocumentSystematicRelationsDao,\
     systematic_string_to_identifier, SystematicIdentifier, SystematicPoint
+from alexandriabase.domain import AlexDate
 
 
 class TestDocumentSystematicRelationsDao(DatabaseBaseTest):
@@ -18,7 +19,7 @@ class TestDocumentSystematicRelationsDao(DatabaseBaseTest):
     def setUp(self):
         super().setUp()
         load_table_data(['systematik', 'sverweis'], self.engine)
-        self.dao = DocumentSystematicRelationsDao(self.engine)
+        self.dao = DocumentSystematicRelationsDao(self.engine, EventFilterExpressionBuilder())
         
     def tearDown(self):
         super().tearDown()
@@ -123,6 +124,12 @@ class TestDocumentSystematicRelationsDao(DatabaseBaseTest):
         # Only in location in use
         systematic_id = SystematicIdentifier('1.1', 1, 0)
         self.assertTrue(self.dao.systematic_id_is_in_use(systematic_id))
+        
+    def test_fetch_document_ids_for_systematic_id_in_timerange(self):
+        
+        references = self.dao.fetch_document_ids_for_systematic_id_in_timerange(systematic_string_to_identifier("1.1.II-1"), AlexDate(1900), AlexDate(2020))
+        print(references)
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
