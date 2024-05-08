@@ -22,7 +22,8 @@ from alexandriabase.daos import DOCUMENT_TABLE, EVENT_TABLE
 from alexandriabase.baseinjectorkeys import CONFIG_KEY
 from alexandriabase.config import NoSuchConfigValue
 from alexplugins import _
-from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier
+from alexplugins.systematic.base import SystematicPoint, SystematicIdentifier,\
+    SystematicService
 from shutil import copyfile
 import logging
 from pathlib import Path
@@ -173,13 +174,13 @@ class CDDataAssembler:
                  document_dao: baseinjectorkeys.DOCUMENT_DAO_KEY,
                  event_dao: baseinjectorkeys.EVENT_DAO_KEY,
                  document_file_info_dao: baseinjectorkeys.DOCUMENT_FILE_INFO_DAO_KEY,
-                 references_dao: baseinjectorkeys.RELATIONS_DAO_KEY,
+                 systematic_service: SystematicService,
                  event_cross_references_dao: baseinjectorkeys.EVENT_CROSS_REFERENCES_DAO_KEY):
         self.messenger = messenger
         self.document_dao = document_dao
         self.event_dao = event_dao
         self.document_file_info_dao = document_file_info_dao
-        self.document_systematic_references_dao = references_dao
+        self.systematic_service = systematic_service
         self.event_cross_references_dao = event_cross_references_dao
     
     def export(self, export_info, data):
@@ -192,7 +193,7 @@ class CDDataAssembler:
         ref_filter.earliest_date = export_info.start_date
         ref_filter.latest_date = export_info.end_date
         
-        event_references = self.document_systematic_references_dao.fetch_doc_event_references(ref_filter)
+        event_references = self.systematic_service.fetch_doc_event_references(ref_filter)
         document_references = {}
         
         document_map = {}
