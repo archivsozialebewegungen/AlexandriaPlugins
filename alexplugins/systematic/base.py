@@ -629,7 +629,7 @@ class SystematicService:
         
         references = self.document_event_references_dao.fetch_doc_event_references(ref_filter)
         additional_references = self.document_systematic_references_dao.fetch_document_ids_for_systematic_id_in_timerange(
-            systematic_string_to_identifier(ref_filter.signature), ref_filter.earliest_date, ref_filter.latest_date)
+            ref_filter.signature, ref_filter.earliest_date, ref_filter.latest_date)
         for document_id in additional_references.keys():
             if document_id not in references:
                 references[document_id] = []
