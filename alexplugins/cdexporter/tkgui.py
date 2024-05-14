@@ -23,6 +23,7 @@ from tkgui.guiinjectorkeys import WINDOW_MANAGER_KEY
 from alexpresenters.DialogPresenters import AbstractInputDialogPresenter
 from tkgui.Dialogs import AbstractInputDialog, Wizard
 from alexandriabase import baseinjectorkeys
+import re
 
 CHRONO_DIALOG_KEY = BoundKey('chrono_dialog')
 CHRONO_DIALOG_PRESENTER_KEY = BoundKey('chrono_dialog_presenter')
@@ -197,9 +198,9 @@ class ExportInfoWizard(Wizard):
         self.signature_button.pack()
         
         # Wizard page 6
-        Label(self.pages[5], text=_("Please select a title image")).pack(padx=5, pady=5)
-        self.start_image_button = AlexButton(self.pages[5], command=self._get_start_image_file)
-        self.start_image_button.pack()
+        Label(self.pages[5], text=_("Please add additional dokument ids (seperated by a colon)")).pack(padx=5, pady=5)
+        self.additional_documents_entry = AlexText(self.pages[5])
+        self.additional_documents_entry.pack()
 
     def config_dialog(self, export_info=None):
         
@@ -209,15 +210,6 @@ class ExportInfoWizard(Wizard):
         
         if signature is not None:
             self.signature_button.set(signature)
-        
-    def _get_start_image_file(self):
-        
-        self.window.attributes('-topmost', False)
-        new_start_image = askopenfilename(filetypes=[(_("Image file"), ".jpg")])
-        self.window.attributes('-topmost', True)
-
-        if new_start_image:
-            self.start_image = new_start_image
 
     def _select_signature(self):
         
@@ -235,7 +227,13 @@ class ExportInfoWizard(Wizard):
         export_info.start_date = self.start_date_entry.get()
         export_info.end_date = self.end_date_entry.get()
         export_info.signature = self.signature
-        export_info.start_image = self.start_image
+        for doc_id_string in re.split("\s*:\s*", self.additional_documents_entry.get()):
+            try:
+                doc_id = int(doc_id_string)
+                export_info.additional_document_ids.append(doc_id)
+            except:
+                pass
+                
         export_info.pagecontent['startpage'] = self.start_page_entry.get()
         export_info.pagecontent['imprint'] = self.imprint_entry.get()
         return export_info
@@ -267,24 +265,7 @@ class ExportInfoWizard(Wizard):
         else:
             self.signature_button.set(signature)
             
-    def _get_start_image(self):
-        
-        start_image = self.start_image_button.get()
-        
-        if start_image == self.NO_IMAGE_SELECTED:
-            return None
-        
-        return start_image 
-    
-    def _set_start_image(self, start_image):
-        
-        if start_image is None:
-            self.start_image_button.set(self.NO_IMAGE_SELECTED)
-        else:
-            self.start_image_button.set(start_image)
-
     signature = property(_get_signature, _set_signature)
-    start_image = property(_get_start_image, _set_start_image)
     export_info = property(_get_export_info, _set_export_info)
 
 class ChronoTextGenerator:

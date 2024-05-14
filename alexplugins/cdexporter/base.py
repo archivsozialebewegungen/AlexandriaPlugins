@@ -105,6 +105,10 @@ No imprint defined
 
 def load_export_info(file_name):
     
+    file = open(file_name, "r")
+    file_as_string = file.readlines()
+    file.close()
+    
     file = open(file_name, 'r')
     export_info = json.load(file, object_hook=export_info_object_hook)
     file.close()
@@ -134,7 +138,7 @@ def export_info_object_hook(obj):
          export_info.signature = obj['signature']
          export_info.cd_name = obj['cd_name']
          export_info.pagecontent = obj['pagecontent']
-         export_info.start_image = obj['start_image']
+         export_info.additional_document_ids = obj['additional_document_ids']
          return export_info
      
     if '_year' in obj:
@@ -199,9 +203,14 @@ class CDDataAssembler:
         document_map = {}
         event_ids = set()
         
-        keys = event_references.keys()
+        document_ids = list(event_references.keys())
+        for document_id in export_info.additional_document_ids:
+            if document_id not in document_ids:
+                event_references[document_id] = []
+                document_ids.append(document_id)
+        
         documents = self.document_dao.find(
-            DOCUMENT_TABLE.c.hauptnr.in_(event_references.keys()))  # @UndefinedVariable
+            DOCUMENT_TABLE.c.hauptnr.in_(document_ids))  # @UndefinedVariable
         
         for document in documents:
             document.related_events = event_references[document.id]
