@@ -637,7 +637,7 @@ class SystematicService:
                 signatures.append(ref_filter.signature)
         for signature in signatures:
             additional_references = self.document_systematic_references_dao.fetch_document_ids_for_systematic_id_in_timerange(
-                ref_filter.signature.id, ref_filter.earliest_date, ref_filter.latest_date)
+                signature.id, ref_filter.earliest_date, ref_filter.latest_date)
             for document_id in additional_references.keys():
                 if document_id not in references:
                     references[document_id] = []
