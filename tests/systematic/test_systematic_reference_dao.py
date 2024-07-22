@@ -72,7 +72,7 @@ class TestDocumentSystematicRelationsDao(DatabaseBaseTest):
         self.assertIn(1, result)
         self.assertIn(4, result)
         
-        systematik_id = SystematicIdentifier('1.1', 0, 0)
+        systematik_id = SystematicIdentifier('1.1', 1, 1)
         result = self.dao.fetch_document_ids_for_systematic_id(systematik_id)
         self.assertEqual(len(result), 0)
 
@@ -130,6 +130,10 @@ class TestDocumentSystematicRelationsDao(DatabaseBaseTest):
         references = self.dao.fetch_document_ids_for_systematic_id_in_timerange(systematic_string_to_identifier("1.1.II-1"), AlexDate(1900), AlexDate(2020))
         print(references)
 
+    def test_fetch_document_ids_for_systematic_id_in_none_timerange(self):
+        
+        references = self.dao.fetch_document_ids_for_systematic_id_in_timerange(systematic_string_to_identifier("1.1.II-1"), None, None)
+        print(references)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

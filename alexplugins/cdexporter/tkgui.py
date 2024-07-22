@@ -7,7 +7,7 @@ from tkinter.constants import LEFT
 
 from injector import BoundKey, ClassProvider, singleton, inject
 from tkgui.AlexWidgets import AlexLabel, AlexEntry, AlexDateEntry,\
-    AlexText, AlexButton, AlexRadioGroup
+    AlexText, AlexButton, AlexRadioGroup, AlexListBox
 from tkgui import guiinjectorkeys
 from alexandriabase.domain import AlexDate
 from alexplugins import _
@@ -144,8 +144,8 @@ class ExportInfoWizardPresenter(AbstractInputDialogPresenter):
         self.view.return_value = self.view.export_info
 
 class ExportInfoWizard(Wizard):
-    
-    NO_SIGNATURE_SELECTED = _('No signature selected')
+
+    ADD_SIGNATURE = _("Add signature")    
     NO_IMAGE_SELECTED = _('No title image selected')
     
     @inject
@@ -191,11 +191,13 @@ class ExportInfoWizard(Wizard):
         self.end_date_entry.pack()
         
         # Wizard page 5
-        Label(self.pages[4], text=_("Please select a signature")).pack(padx=5, pady=5)
+        Label(self.pages[4], text=_("Please select one or more signatures")).pack(padx=5, pady=5)
         self.signature_button = AlexButton(
             self.pages[4], 
-            command=lambda: self.signature_dialog.activate(self._signature_callback, label=_("Select a signature")))
+            command=lambda: self.signature_dialog.activate(self._signature_callback, label=self.ADD_SIGNATURE))
         self.signature_button.pack()
+        self.signature_list = AlexListBox(self.pages[4], height=2)
+        self.signature_list.pack()
         
         # Wizard page 6
         Label(self.pages[5], text=_("Please add additional dokument ids (seperated by a colon)")).pack(padx=5, pady=5)
@@ -209,24 +211,17 @@ class ExportInfoWizard(Wizard):
     def _signature_callback(self, signature):
         
         if signature is not None:
-            self.signature_button.set(signature)
+            self.signature_list.append_item(signature)
 
-    def _select_signature(self):
-        
-        self.signature_dialog.activate(self, self._select_signature_callback)
-
-    def _select_signature_callback(self, signature):
-
-        if signature:
-            self.signature = self.signature_service.object_to_id(signature)
-        
     def _get_export_info(self):
         
         export_info = ExportInfo()
         export_info.cd_name = self.name_entry.get()
         export_info.start_date = self.start_date_entry.get()
         export_info.end_date = self.end_date_entry.get()
-        export_info.signature = self.signature
+        export_info.signature = self.signature_list.items
+        if len(export_info.signature) == 0:
+            export_info.signature = None
         for doc_id_string in re.split("\s*:\s*", self.additional_documents_entry.get()):
             try:
                 doc_id = int(doc_id_string)
@@ -250,20 +245,21 @@ class ExportInfoWizard(Wizard):
 
     def _get_signature(self):
         
-        signature = self.signature_button.get()
+        signature = self.signature_list.get_items()
         
-        if "%s" % signature == self.NO_SIGNATURE_SELECTED:
+        if len(signature) == 0:
             return None
-        
+                
         return signature
      
     
     def _set_signature(self, signature):
         
-        if signature is None:
-            self.signature_button.set(self.NO_SIGNATURE_SELECTED)
+        self.signature_button.set(self.ADD_SIGNATURE)
+        if signature is not None:
+            self.signature_list.set_items(signature)
         else:
-            self.signature_button.set(signature)
+            self.signature_list.set_items([])
             
     signature = property(_get_signature, _set_signature)
     export_info = property(_get_export_info, _set_export_info)

@@ -89,12 +89,14 @@ No imprint defined
 
     def __str__(self):
         
-        return "%s: %s, %s: %s, %s: %s" % (_("CD Name"),
+        return "%s: %s, %s: %s, %s: %s, %s: %s" % (_("CD Name"),
                                            self.cd_name,
                                            _("Start date"),
                                            self.start_date,
                                            _("End date"),
-                                           self.end_date)
+                                           self.end_date,
+                                           _("Signature"),
+                                           self.signature)
 
     def save_to_file(self, file_name):
         

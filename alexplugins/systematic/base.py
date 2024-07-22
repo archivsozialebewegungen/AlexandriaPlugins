@@ -628,14 +628,15 @@ class SystematicService:
     def fetch_doc_event_references(self, ref_filter):
         
         references = self.document_event_references_dao.fetch_doc_event_references(ref_filter)
-        additional_references = self.document_systematic_references_dao.fetch_document_ids_for_systematic_id_in_timerange(
-            ref_filter.signature.id, ref_filter.earliest_date, ref_filter.latest_date)
-        for document_id in additional_references.keys():
-            if document_id not in references:
-                references[document_id] = []
-            for event_id in additional_references[document_id]:
-                if event_id not in references[document_id]:
-                    references[document_id].append(event_id)
+        if ref_filter.signature is not None:
+            additional_references = self.document_systematic_references_dao.fetch_document_ids_for_systematic_id_in_timerange(
+                ref_filter.signature.id, ref_filter.earliest_date, ref_filter.latest_date)
+            for document_id in additional_references.keys():
+                if document_id not in references:
+                    references[document_id] = []
+                for event_id in additional_references[document_id]:
+                    if event_id not in references[document_id]:
+                        references[document_id].append(event_id)
         return references
         
     def fetch_document_ids_for_main_systematic(self, systematic: int):
