@@ -311,13 +311,22 @@ class SystematicDocumentFilterExpressionBuilder(DocumentFilterExpressionBuilder)
         '''
         if not document_filter.signature:
             return None
-        signature = "%s" % document_filter.signature
-        if type(document_filter.signature) == SystematicPoint:
-            signature = "%s" % document_filter.signature.id
+        signatures = []
+        if type(document_filter.signature) == str:
+            signatures.append("%s" % document_filter.signature)
+        elif type(document_filter.signature) == SystematicPoint:
+            signatures.append("%s" % document_filter.signature.id)
+        else:
+            for signature in document_filter.signature:
+                signatures.append("%s" % signature.id)
+                
+        expressions = []
+        for signature in signatures:
+            expressions.append(self.table.c.standort == signature)
+            expressions.append(self.table.c.standort.startswith("%s." % signature))
+            expressions.append(self.table.c.standort.startswith("%s-" % signature))
 
-        return or_(self.table.c.standort == signature,
-                   self.table.c.standort.startswith("%s." % signature),
-                   self.table.c.standort.startswith("%s-" % signature))
+        return or_(*expressions)
 
 
 
@@ -470,7 +479,9 @@ class DocumentSystematicRelationsDao(GenericDao):
                     self.event_table,
                     self.event_table.c.ereignis_id == self.deref_table.c.ereignis_id)        
 
-        systematic_where_clause = self._create_systematic_reference_where_clause(systematic_id)
+        standort_where_clause = self._create_standort_where_clause(systematic_id)
+        systematic_reference_where_clause = self._create_systematic_reference_where_clause(systematic_id)
+        systematic_where_clause = or_(standort_where_clause, systematic_reference_where_clause)
 
         date_filter = EventFilter()
         date_filter.earliest_date = earliest_date
@@ -515,6 +526,10 @@ class DocumentSystematicRelationsDao(GenericDao):
         if systematic_id.subfolder != 0:
             where_clause = and_(self.dsref_table.c.sub == systematic_id.subfolder, where_clause)
         return where_clause  
+
+    def _create_standort_where_clause(self, systematic_id: SystematicIdentifier):
+        
+        return or_(self.doc_table.c.standort == "%s" % systematic_id, self.doc_table.c.standort.like("%s.%%" % systematic_id))
 
     def fetch_signature_for_document_id(self, document_id):
         '''

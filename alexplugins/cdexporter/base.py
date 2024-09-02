@@ -238,6 +238,8 @@ class CDDataAssembler:
         
         data['events'] = events
         data['documents'] = documents
+        for document in documents:
+            print(document.id)
     
             
 class CopyThumbnailRunner:
@@ -461,7 +463,7 @@ class CopyMultimediaRunner:
             percentage = int(counter * 100.0 / number_of_documents)
             self.messenger.show(_("CD generation: Fetching multimedia files... %d%% done.") % percentage)
             for file_info in document.file_infos:
-                if file_info.filetype != 'mpg' and file_info.filetype != "mp4":
+                if file_info.filetype != 'mpg' and file_info.filetype != "mp4" and file_info.filetype != "mp3":
                     continue
                 
                 try:
@@ -494,7 +496,7 @@ class SymLinkMultimediaRunner:
             percentage = int(counter * 100.0 / number_of_documents)
             self.messenger.show(_("CD generation: Fetching multimedia files... %d%% done.") % percentage)
             for file_info in document.file_infos:
-                if file_info.filetype != 'mpg' and file_info.filetype != 'mp4':
+                if file_info.filetype != 'mpg' and file_info.filetype != 'mp4' and file_info.filetype != 'mp3':
                     continue
                 
                 try:

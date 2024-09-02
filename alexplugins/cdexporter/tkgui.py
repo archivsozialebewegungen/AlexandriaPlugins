@@ -242,6 +242,7 @@ class ExportInfoWizard(Wizard):
         self.start_image = export_info.start_image
         self.start_page_entry.set(export_info.pagecontent['startpage'])
         self.imprint_entry.set(export_info.pagecontent['imprint'])
+        self.additional_documents_entry.set(":".join(list(map(str, export_info.additional_document_ids))))
 
     def _get_signature(self):
         
