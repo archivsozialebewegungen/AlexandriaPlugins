@@ -229,7 +229,7 @@ class ServiceTest(unittest.TestCase):
         self.document_systematic_references_dao.fetch_document_ids_for_systematic_id_in_timerange.return_value = {4: [6, 7], 7: [8, 9]} 
         
         test_filter = EventFilter()
-        test_filter.signature = "1.1.II-1"
+        test_filter.signature = SystematicPoint(SystematicIdentifier("1.1.", 2, 1), "whatever")
         test_filter.earliest_date = AlexDate(1990)
         test_filter.latest_date = AlexDate(2020)
         
