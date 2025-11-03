@@ -7,6 +7,7 @@ import unittest
 import pytest
 
 from alexandriabase.domain import Node, NoSuchNodeException
+from alexandriabase.daos import DocumentDao
 from daotests.test_base import DatabaseBaseTest
 from alex_test_utils import load_table_data
 from alexplugins.systematic.base import SystematicDao, SystematicIdentifier,\
@@ -18,7 +19,8 @@ class TestSystematicDao(DatabaseBaseTest):
     def setUp(self):
         super().setUp()
         load_table_data(['systematik', 'sverweis'], self.engine)
-        self.dao = SystematicDao(self.engine)
+        documentDao = self.injector.get(DocumentDao)
+        self.dao = SystematicDao(documentDao, self.engine)
         
     def test_load_tree(self):
         tree = self.dao.get_tree()

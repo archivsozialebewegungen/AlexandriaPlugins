@@ -6,6 +6,7 @@ Created on 07.05.2016
 import unittest
 
 from daotests.test_base import DatabaseBaseTest
+from alexandriabase.daos import DocumentDao
 from alex_test_utils import load_table_data
 from alexplugins.systematic.base import SystematicDao,\
     SystematicPdfGenerationService
@@ -17,7 +18,7 @@ class TestSystematicPdfGenerationService(DatabaseBaseTest):
     def setUp(self):
         super().setUp()
         load_table_data(['systematik', 'sverweis'], self.engine)
-        self.systematic_dao = SystematicDao(self.engine)
+        self.systematic_dao = SystematicDao(self.injector.get(DocumentDao), self.engine)
         self.service = SystematicPdfGenerationService(self.systematic_dao)
 
 

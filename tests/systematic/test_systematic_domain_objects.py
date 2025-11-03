@@ -168,19 +168,19 @@ class TestSystematicIdentifier(unittest.TestCase):
         
     def test_to_string_1(self):
         identifier = SystematicIdentifier("1.1.7")
-        self.assertEquals("%s" % identifier, "1.1.7")
+        self.assertEqual("%s" % identifier, "1.1.7")
 
     def test_to_string_2(self):
         identifier = SystematicIdentifier("1.1.7", 1)
-        self.assertEquals("%s" % identifier, "1.1.7.I")
+        self.assertEqual("%s" % identifier, "1.1.7.I")
 
     def test_to_string_3(self):
         identifier = SystematicIdentifier("1.1.7", 1, 5)
-        self.assertEquals("%s" % identifier, "1.1.7.I-5")
+        self.assertEqual("%s" % identifier, "1.1.7.I-5")
 
     def test_to_string_4(self):
         identifier = SystematicIdentifier("1.1.7", 0, 5)
-        self.assertEquals("%s" % identifier, "1.1.7-5")
+        self.assertEqual("%s" % identifier, "1.1.7-5")
 
 class TreeTest(unittest.TestCase):
     

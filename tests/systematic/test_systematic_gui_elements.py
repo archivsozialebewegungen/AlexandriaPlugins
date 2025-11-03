@@ -117,7 +117,7 @@ class TestSystematicPlugin(BaseIntegrationTest):
         
         self.presenter.delete_entry_action()
         
-        self.assertEquals(
+        self.assertEqual(
             _("Systematic entry with children may not be deleted"),
             self.received_messages[0].message)
 
@@ -128,7 +128,7 @@ class TestSystematicPlugin(BaseIntegrationTest):
         
         self.presenter.delete_entry_action()
         
-        self.assertEquals(
+        self.assertEqual(
             _("Can't delete entry when sibling exists"),
             self.received_messages[0].message)
         
@@ -139,7 +139,7 @@ class TestSystematicPlugin(BaseIntegrationTest):
         
         self.presenter.delete_entry_action()
         
-        self.assertEquals(
+        self.assertEqual(
             _("Entry which is in use by documents may not be deleted"),
             self.received_messages[0].message)
         
